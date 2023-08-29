@@ -1,0 +1,21 @@
+/* Playlist.css */
+.playlist-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+
+/* Media queries for responsiveness */
+@media screen and (max-width: 768px) {
+  .playlist-container {
+    flex-direction: column;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .playlist-container {
+    padding: 20px;
+  }
+}

@@ -1,0 +1,28 @@
+/* antd-custom.css */
+
+/* Change font size for Menu.Item */
+.ant-menu-item {
+  font-size: 17px; /* Adjust the font size to your preference */
+}
+
+/* Change font size for Dragger (if available) */
+.ant-dragger {
+  font-size: 17px; /* Adjust the font size to your preference */
+}
+
+/* Change font size for Button */
+.ant-btn {
+  font-size: 17px; /* Adjust the font size to your preference */
+}
+
+/* antd-custom.css */
+
+/* Change font size for form labels */
+.ant-form-item-label {
+  font-size: 17px; /* Adjust the font size to your preference */
+}
+
+/* Change font size for form items (input fields) */
+.ant-form-item-control-input-content {
+  font-size: 17px; /* Adjust the font size to your preference */
+}

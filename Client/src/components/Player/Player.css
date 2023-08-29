@@ -1,0 +1,54 @@
+
+
+
+/* ///////////////////////////////////////////////////// */
+.rhap_container{
+  background-color: black !important;
+  width: 96%!important;
+}
+
+.rhap_time{
+  color: white!important;
+}
+
+
+
+.musicCoverContainer {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.musicCover {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+}
+
+.audioPlayerContainer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Player.css */
+.button {
+  color: white;
+  border: 1px solid white;
+  border-width: "0.5px";
+  background: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  width: 175px;
+  /* transition: color 0.3s, border-color 0.3s; */
+}
+
+.button:hover {
+  color: #e3e3e3;
+  /* border-color: #e3e3e3; */
+}
+
+.button:active {
+  color: #a1a1a1;
+  /* border-color: #a1a1a1; */
+}
+
