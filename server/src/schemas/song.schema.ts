@@ -33,6 +33,8 @@ export class Song extends Document {
 
   @Prop({ default: Date.now() })
   uploadDate: Date;
+
+  
 }
 
 export const SongSchema = SchemaFactory.createForClass(Song);
