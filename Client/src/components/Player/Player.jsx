@@ -6,17 +6,23 @@ import AudioPlayer from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
 import { useLocation, useNavigate } from "react-router-dom";
 const baseUrl = "http://localhost:3000/mp3";
+const reportsURL = "http://localhost:3000/abuse-reports";
+
 // npm install react-h5-audio-player
 import {
   LikeOutlined,
   StarOutlined,
-  VerticalAlignBottomOutlined,
+  LikeFilled,
   PlusOutlined,
   MinusOutlined,
   StarFilled,
+  InfoCircleOutlined,
+  DownloadOutlined,
+  DownOutlined,
+  UpOutlined,
   // StarHalfOutlined,
 } from "@ant-design/icons";
-import { List, Space } from "antd";
+import { List, Space, Button, Tooltip, Image, Layout } from "antd";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 
@@ -51,9 +57,13 @@ const StarIcon = ({ type }) => {
     return <StarOutlined style={starStyle} />;
   }
 };
+
 const Player = () => {
   const { Title } = Typography;
   const { Text } = Typography;
+  const { Header, Footer, Sider, Content } = Layout;
+  const [likedSongs, setLikedSongs] = useState([]);
+  const [isLiked, setIsLiked] = useState(false);
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const [addedToPlaylist, setAddedToPlaylist] = useState(false);
   const [songDetails, setSongDetails] = useState({
@@ -62,39 +72,123 @@ const Player = () => {
     song_rate: "",
     audio_url: "",
     image_url: "",
-    id: "",
+    song_id: "",
+    like: 0,
+    artists: [],
+    album: "",
+    duration: 0,
+    title: "",
+    genre: "",
+    comment: "",
+    year: 2023,
   });
-  const accessToken = cookies.access_token || null;
+  const [moreDetails, setMoreDetails] = useState(false);
+  const { state } = useLocation(); // state all song details from songsList componnent (pressed song)
   const navigate = useNavigate();
-  // state all song details from songsList componnent (pressed song)
-  const { state } = useLocation();
-
+  const accessToken = cookies.access_token || null;
+  const songID = state.id;
   useEffect(() => {
-    setSongDetails({
-      song_name: state.song_name,
-      song_description: state.song_description,
-      song_rate: state.rate,
-      audio_url: state.audioUrl,
-      image_url: state.imageUrl,
-      id: state.id,
-    });
+    // קבלת רשימת שירים שהבנא הספציפי עשה עליהם לייק
+    const likedSongsFromStorage = localStorage.getItem("LikedSongs") || [];
+    if (likedSongsFromStorage != []) {
+      setLikedSongs(JSON.parse(likedSongsFromStorage));
+    }
+    // Check if the current song is liked
+    const isLiked = likedSongsFromStorage.includes(songID.toString());
+    setIsLiked(isLiked);
+    // קריאת שרת לבדוק האם השיר רשום בפלייליסט ולעדכן את הכפתור
+    checkSongExists();
+    // Make an API request to fetch the like count for the current song
+    fetchLikeCount();
   }, []);
+  // check Song Exists in the playlist (+/-) called in useWffect
+  const checkSongExists = () => {
+    // קריאת שרת לבדוק האם השיר רשום בפלייליסט ולעדכן את הכפתור
+    axios
+      .get(`${baseUrl}/checkSongExists/${state.id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      .then((response) => {
+        setAddedToPlaylist(response.data);
+      })
+      .catch((error) => {
+        handlePlaylistError(error, "connect");
+      });
+  };
+  // when page refreshed - [updateLike...]
+  //בגלל שהוא משתמש בסטייט - שזה המידע שנשלף הקריאה בעמוד רשימת שירים,, אז כשרפרשים את העמוד הזה
+  //אין עוד קריאה לכן נראה את הערך הקודם לפני הוספת הלייק ורק אם נפנה לשיר שוב מרשימת השירים נראה את העידכון
+  // לכן הפונקציה הזו קוראת קריאת שרת ביזסטטייט , ברגע שמתרנדר העמוד
+  const fetchLikeCount = () => {
+    // Make an API request to fetch the like count for the current song
+    axios
+      .get(`${baseUrl}/getLikeCount/${state.id}`)
+      .then((response) => {
+        console.log(response);
+        setSongDetails({
+          song_name: state.song_name,
+          song_description: state.song_description,
+          song_rate: state.rate,
+          audio_url: state.audioUrl,
+          image_url: state.imageUrl,
+          song_id: state.id,
+          like: response.data.likeCount || 0,
+          artists: state.artists,
+          album: state.album,
+          duration: state.duration,
+          title: state.title,
+          genre: state.genre,
+          comment: state.comment,
+          year: state.year,
+          description:state.description,
+        });
+        console.log(state);
+      })
+      .catch((error) => {
+        console.log("Failed to fetch like count:", error);
+        setSongDetails({
+          song_name: state.song_name,
+          song_description: state.song_description,
+          song_rate: state.rate,
+          audio_url: state.audioUrl,
+          image_url: state.imageUrl,
+          song_id: state.id,
+          like: 1,
+          artists: state.artists,
+          album: state.album,
+          duration: state.duration,
+          title: state.title,
+          genre: state.genre,
+          comment: state.comment,
+          year: state.year,
+          description:state.description,
+        });
+      });
+  };
 
-  const starArray = generateStarArray(songDetails.song_rate);
-
-  const IconText = ({ icon, text }) => (
-    <Space>
-      {React.createElement(icon)}
-      {text}
-    </Space>
-  );
+  // handle errors with playlist
+  const handlePlaylistError = (error, action) => {
+    console.log(action);
+    if (error.response.status === 401 && action != "connect") {
+      if (!accessToken) message.warning("You need to first Login");
+      else {
+        message.warning("Token expired navigate to Login");
+        removeCookie("access_token", { path: "/" });
+        removeCookie("id", { path: "/" });
+      }
+      navigate("/login", { state: songDetails.song_id });
+    } else {
+      // Handle other errors
+      if (action != "connect") message.error(`Error ${action}ing to playlist`);
+    }
+  };
 
   // add a song to user's playlist
   const addToPlayList = () => {
     axios
       .put(
         `${baseUrl}/addToPlaylist`,
-        { songId: songDetails.id },
+        { songId: songDetails.song_id },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
@@ -112,27 +206,15 @@ const Player = () => {
         }
       })
       .catch((error) => {
-        console.log(error.response);
-        if (error.response.status === 401) {
-          if (!accessToken) message.warning("You need to first Login");
-          else {
-            message.warning("Token expired navigate to Login");
-            removeCookie("access_token", { path: "/" });
-            removeCookie("id", { path: "/" });
-          }
-          navigate("/login", { state: songDetails.id });
-        } else {
-          // Handle other errors
-          message.error("Error adding to playlist");
-        }
+        handlePlaylistError(error, "add");
       });
   };
-
+  // remove from playlist
   const removeFromPlayList = () => {
     axios
       .put(
         `${baseUrl}/removeFromPlaylist`,
-        { songId: songDetails.id },
+        { songId: songDetails.song_id },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
@@ -142,102 +224,400 @@ const Player = () => {
         setAddedToPlaylist(false);
       })
       .catch((error) => {
-        if (error.response.status === 401) {
-          if (!accessToken) message.error("You need to first Login");
-          else {
-            message.error("Token expired navigate to Login");
-            removeCookie("access_token", { path: "/" });
-            removeCookie("id", { path: "/" });
-          }
-          navigate("/login", { state: songDetails.id });
-        } else {
-          message.error("Error removing this song to plaaylist");
-        }
+        handlePlaylistError(error, "remove");
       });
   };
 
+  // add like
+  const addLike = () => {
+    axios
+      .put(`${baseUrl}/addlike`, { song_id: songDetails.song_id })
+      .then((res) => {
+        setSongDetails({ ...songDetails, like: songDetails.like + 1 });
+        setIsLiked(true);
+        // add song to localstorage to
+        const newLikedSongs = [...likedSongs, songDetails.song_id];
+        setLikedSongs(newLikedSongs);
+        localStorage.setItem("LikedSongs", JSON.stringify(newLikedSongs));
+      })
+      .catch((err) => console.log(err));
+  };
+  // remove like
+  const removeLike = () => {
+    axios
+      .put(`${baseUrl}/removelike`, { song_id: songDetails.song_id })
+      .then((res) => {
+        setSongDetails({ ...songDetails, like: songDetails.like - 1 });
+        setIsLiked(false);
+        // remove song from localstorage
+        const newLikedSongs = likedSongs.filter(
+          (songid) => songid !== songDetails.song_id
+        );
+        setLikedSongs(newLikedSongs);
+        localStorage.setItem("LikedSongs", JSON.stringify(newLikedSongs));
+      })
+      .catch((err) => console.log(err));
+  };
+
+  // download
   const handleDownload = () => {
     // Create a temporary anchor element
     const downloadLink = document.createElement("a");
     downloadLink.href = songDetails.audio_url;
-    downloadLink.download = "song.mp3"; // Set the default download filename
+    downloadLink.download = `${songDetails.song_name}.mp3`; // Set the default download filename
     document.body.appendChild(downloadLink);
     downloadLink.click(); // Simulate a click on the link to initiate the download
     document.body.removeChild(downloadLink); // Clean up the temporary element
   };
+
+  // ReportAbuse דיווח על שימוש לרעה
+  const handleReportAbuse = () => {
+    axios
+      .post(
+        `${reportsURL}/create`,
+        { details: { songId: songDetails.song_id } },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      )
+      .then((response) => {
+        console.log(response.data);
+        message.success(
+          <div>
+            תודה על תגובתך
+            <br />
+            הדיווח נרשם בהצלחה ויעבור לטיפול
+          </div>
+        );
+      })
+      .catch((error) => {
+        message.error(
+          <div>
+            מצטערים, הדיווח לא נשלח
+            <br />
+            {error.message}
+          </div>
+        );
+      });
+  };
+
+  const showMoreDetails = () => {
+    if (moreDetails) setMoreDetails(false);
+    else setMoreDetails(true);
+  };
+  const starArray = generateStarArray(songDetails.song_rate);
+
+  const headerStyle = {
+    textAlign: "left",
+    height: 100,
+    paddingInline: 50,
+    backgroundColor: "black",
+    
+  };
+  const contentStyle = {
+    textAlign: "left",
+    // minHeight: 120,
+    // lineHeight: "10px",
+    paddingInline: 50,
+    backgroundColor: "black",
+    maxHeight: "130px",
+  };
+  const siderStyle = {
+    backgroundColor: "black",
+    width: "300px",
+    flex: "0 0 300px", // This ensures a fixed width of 300px
+  };
+  const footerStyle = {
+    textAlign: "left",
+    backgroundColor: "black",
+    paddingInline: 50,
+    paddingTop: 10,
+    paddingBottom: 10,
+    minHeight: 70,
+    maxHeight: 70,
+  };
+  const buttonStyle = {
+    background: "none",
+    border: "none",
+    padding: "10px",
+    cursor: "pointer",
+    boxShadow: "none",
+    outline: "none",
+    paddingLeft: 0,
+    color: "#5B80FC",
+  };
+  const listContainerStyle = {
+    overflowY: "auto",
+    maxHeight: "100px", // Adjust the max height as needed
+  };
   return (
     <>
-      <List
-        // style={{ position: "fixed" , bottom: 100}}
-        itemLayout="vertical"
-        size="large"
-        dataSource={[songDetails]}
-        renderItem={(songDetails) => (
-          <List.Item
-            key={songDetails.song_name}
-            actions={[
-              // <IconText
-              //   icon={StarOutlined}
-              //   text={songDetails.song_rate}
-              //   key="list-vertical-star-o"
-              // />,
-              <span key="star-icons">
-                {/* Map over the starArray and render stars */}
-                {starArray.map((star, index) => (
-                  <StarIcon key={`star-${index}`} type={star} />
-                ))}
-              </span>,
-              addedToPlaylist ? (
-                <button
-                  key="button-list-vertical-play-list"
-                  onClick={removeFromPlayList}
-                  className="button"
-                >
-                  <IconText
-                    icon={MinusOutlined}
-                    text="Remove from Playlist"
-                    key="list-vertical-play-list"
-                  />
-                </button>
-              ) : (
-                <button
-                  key="button-list-vertical-play-list"
-                  onClick={addToPlayList}
-                  className="button"
-                >
-                  <IconText
-                    icon={PlusOutlined}
-                    text="Add to Playlist"
-                    key="list-vertical-play-list"
-                  />
-                </button>
-              ),
-              <button
-                key="button-list-vertical-download"
-                onClick={handleDownload}
-                className="button"
-              >
-                <IconText
-                  icon={VerticalAlignBottomOutlined}
-                  text="Download"
-                  key="download"
-                />
-              </button>,
-            ]}
-            extra={<img width={272} alt="logo" src={songDetails.image_url} />}
+      <Layout
+        style={{
+          bottom: 120,
+          left: "7.5%",
+          width: "100%",
+          position: "fixed",
+          backgroundColor: "black",
+        }}
+      >
+        <Sider style={siderStyle} width={300}>
+          <div
+            style={{
+              width: 300, // Adjust this width to your desired width
+              // height: 200, // Adjust this height to your desired height
+              // overflow: "hidden",
+            }}
           >
-            {/* <Tag color="green" key={"preset"}>
-              {"private"}
-            </Tag> */}
-            <List.Item.Meta
-              title={<a>{songDetails.song_name}</a>}
-              description={songDetails.song_description}
+            <Image
+              style={
+                {
+                  // clip: "rect(100px, 400px, 400px, 100px)", // Adjust the values as needed
+                  // width: 400, // Make sure it matches the width of the containing div
+                  // height: 300, // Make sure it matches the height of the containing div
+                }
+              }
+              src={songDetails.image_url}
+              preview={{
+                src: songDetails.image_url,
+              }}
             />
+          </div>
+        </Sider>
+        <Layout>
+          <Header style={headerStyle}>
+            <List>
+              <List.Item style={{ display: "inline", lineHeight: 0.1 }}>
+                <Title level={2} style={{ lineHeight: 0.2, marginTop: "5px" }}>
+                  {songDetails.title}
+                </Title>
+              </List.Item>
+              <br />
+              <List.Item style={{ display: "inline", paddingTop: "1px" }}>
+                {songDetails.artists[0] && (
+                  <span>
+                    {" "}
+                    {songDetails.artists.map((artist) => artist).join(", ")}
+                  </span>
+                )}
+              </List.Item>
+              <br />
+              <List.Item style={{ display: "inline" }}>
+                <span key="star-icons">
+                  {/* Map over the starArray and render stars */}
+                  {starArray.map((star, index) => (
+                    <StarIcon key={`star-${index}`} type={star} />
+                  ))}
+                </span>
+              </List.Item>
+            </List>
+          </Header>
 
-            {songDetails.song_description}
-          </List.Item>
-        )}
-      />
+          <Content style={contentStyle}>
+            <Button style={buttonStyle} onClick={showMoreDetails}>
+              {moreDetails ? (
+                <>
+                  <span style={{ fontSize: "17px" }}>Less Dtails</span>
+                  <UpOutlined
+                    style={{ fontSize: "18px", marginLeft: "10px" }}
+                  />
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "17px" }}>More Dtails</span>
+                  <DownOutlined
+                    style={{ fontSize: "17px", marginLeft: "10px" }}
+                  />
+                </>
+              )}
+            </Button>
+
+            {moreDetails ? (
+              <List style={listContainerStyle}>
+                <List.Item style={{ display: "inline" }}>
+                  {<span>album: {songDetails.album}</span>}
+                </List.Item>
+                <br />
+                <List.Item style={{ display: "inline" }}>
+                  {<span>description: {songDetails.description}</span>}
+                </List.Item>
+                <br />
+                <List.Item style={{ display: "inline" }}>
+                  {<span>year: {songDetails.year}</span>}
+                </List.Item>
+                <br />
+                <List.Item style={{ display: "inline" }}>
+                  {<span>genre: {songDetails.genre}</span>}
+                </List.Item>
+                <br />
+                <List.Item style={{ display: "inline" }}>
+                  {
+                    <span>
+                      duration: {(songDetails.duration / 60).toFixed(2)} min.
+                    </span>
+                  }
+                </List.Item>
+                <br />
+                <List.Item style={{ display: "inline" }}>
+                  <span>
+                    comments:{" "}
+                    {songDetails.comment.map((comment) => comment).join(", ")}
+                  </span>
+                </List.Item>
+                <br />
+
+                {/* <List.Item style={{ display: "inline" }}>
+                  {<span>album: {songDetails}</span>}
+                </List.Item> */}
+              </List>
+            ) : null}
+          </Content>
+          <Footer style={footerStyle}>
+            <List
+              style={
+                {
+                  // bottom: 100,
+                  // marginTop: 0,
+                  // left: 0,
+                  // width: "80%",
+                  // position: "fixed",
+                }
+              }
+            >
+              <List.Item style={{ display: "inline-block" }}>
+                <Tooltip title="Like">
+                  <Button
+                    type="primary"
+                    shape="round"
+                    icon={
+                      isLiked ? (
+                        <LikeFilled
+                          style={{
+                            strokeWidth: "20",
+                            stroke: "white",
+                            paddingRight: "5px",
+                          }}
+                        />
+                      ) : (
+                        <LikeOutlined
+                          style={{
+                            strokeWidth: "20",
+                            stroke: "white",
+                            paddingRight: "5px",
+                          }}
+                        />
+                      )
+                    }
+                    size={"large"}
+                    onClick={!isLiked ? addLike : removeLike}
+                    style={{
+                      backgroundColor: "black",
+                      borderColor: "grey",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {songDetails.like}
+                  </Button>
+                </Tooltip>
+              </List.Item>
+              <List.Item style={{ display: "inline-block", margin: "0 10px" }}>
+                {!addedToPlaylist && (
+                  <Tooltip title="Add to Playlist">
+                    <Button
+                      type="primary"
+                      shape="round"
+                      icon={
+                        <PlusOutlined
+                          style={{
+                            strokeWidth: "60",
+                            stroke: "white",
+                          }}
+                        />
+                      }
+                      onClick={addToPlayList}
+                      size={"large"}
+                      style={{
+                        backgroundColor: "black",
+                        borderColor: "grey",
+                        fontWeight: "bold",
+                      }}
+                    />
+                  </Tooltip>
+                )}
+
+                {addedToPlaylist && (
+                  <Tooltip title="Remove from PlayList">
+                    <Button
+                      type="primary"
+                      shape="round"
+                      icon={
+                        <MinusOutlined
+                          style={{
+                            strokeWidth: "60",
+                            stroke: "white",
+                          }}
+                        />
+                      }
+                      onClick={removeFromPlayList}
+                      size={"large"}
+                      style={{
+                        backgroundColor: "black",
+                        borderColor: "grey",
+                        fontWeight: "bold",
+                      }}
+                    ></Button>
+                  </Tooltip>
+                )}
+              </List.Item>
+              <List.Item style={{ display: "inline-block", margin: "0 10px" }}>
+                <Tooltip title="Download">
+                  <Button
+                    type="primary"
+                    shape="round"
+                    icon={
+                      <DownloadOutlined
+                        style={{
+                          strokeWidth: "60",
+                          stroke: "white",
+                        }}
+                      />
+                    }
+                    size={"large"}
+                    onClick={handleDownload}
+                    style={{
+                      backgroundColor: "black",
+                      borderColor: "grey",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {"Download"}
+                  </Button>
+                </Tooltip>
+              </List.Item>
+
+              <List.Item style={{ display: "inline-block", margin: "0 10px" }}>
+                <Tooltip title="Report">
+                  <Button
+                    type="primary"
+                    shape="round"
+                    icon={<InfoCircleOutlined />}
+                    size={"large"}
+                    onClick={handleReportAbuse}
+                    style={{
+                      backgroundColor: "black",
+                      border: "none",
+                      color: "red",
+                    }}
+                  >
+                    {"דיווח על תוכן לא ראוי"}
+                  </Button>
+                </Tooltip>
+              </List.Item>
+            </List>
+          </Footer>
+        </Layout>
+      </Layout>
+
       <div
         style={{
           textAlign: "center",
@@ -261,79 +641,25 @@ const Player = () => {
 
 export default Player;
 
-// download
-
-// const handleDownload = () => {
-//   axios.get(`${baseUrl}/download/${songDetails.id}`, )
-//     .then((response) => {
-//       // Create a blob from the response data
-//       const blob = new Blob([response.data], { type: "audio/mpeg" });
-
-//       // Create a URL for the blob
-//       const url = window.URL.createObjectURL(blob);
-
-//       // Create a temporary link and click it to trigger the download
-//       const link = document.createElement("a");
-//       link.href = url;
-//       link.setAttribute("download", `song_${songDetails.song_name}.mp3`);
-//       document.body.appendChild(link);
-//       link.click();
-
-//       // Clean up the URL object after download
-//       URL.revokeObjectURL(url);
-//     })
-//     .catch((error) => {
-//       console.error("Error downloading song:", error);
-//       // Handle error here (e.g., show an error message to the user)
-//     });
-// };
-
-// const fetchAudio = async (song_Id) => {
-//   // if (isInitialRender) {
-//   // setIsInitialRender(false);
-//   try {
-//     const response = await axios.post(
-//       "http://localhost:3000/mp3/fetch",
-//       { fileId: song_Id },
-//       {
-//         headers: {
-//           "content-type": "application/json",
-//         },
-//       }
-//     );
-//     const { imageUrl, audioUrl, song_name, song_description } =
-//       response.data;
-//     setImageUrl(imageUrl);
-//     setAudioUrl(audioUrl);
-//     setSongName(song_name);
-//     setSongDescription(song_description);
-//   } catch (error) {
-//     // console.error("Error fetching audio:", error);
-//     console.log("Error fetching audio:---------");
-//   }
-//   // }
-// };
-// fetchAudio("64a3fa4ebfafa2b2d4f96e3d");
-
 {
-  /* <Row justify="center" align="middle"> */
-}
-{
-  /* <Col xs={24} sm={24} md={16} lg={12} xl={8}> */
-}
-{
-  /* <Title level={2}>{songName}</Title>
-          <Text strong>{songDescription}</Text>
-          <img
-            className="musicCover"
-            src={imageUrl}
-            alt="Music Cover"
-            style={{ width: "80%" }}
-          /> */
-}
-{
-  /* </Col> */
-}
-{
-  /* </Row> */
+  /* <List>
+<List.Item style={{ margin: "0 10px" }}>
+  {songDetails.artists[0] && (
+    <span>
+      artists: {songDetails.artists.map((artist) => artist).join(", ")}
+    </span>
+  )}
+</List.Item>
+<List.Item style={{ margin: "0 10px" }}>
+  {songDetails.comment[0] && (
+    <span>
+      comments:{" "}
+      {songDetails.comment.map((comment) => comment).join(", ")}
+    </span>
+  )}
+</List.Item>
+<List.Item style={{ margin: "0 10px" }}>
+  {<span>album: {songDetails.album}</span>}
+</List.Item>
+</List> */
 }

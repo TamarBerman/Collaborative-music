@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Song } from '../../schemas/song.schema';
+import { Console } from 'console';
+import * as mongoose from 'mongoose';
+
 
 @Injectable()
 export class SongService {
   constructor(@InjectModel(Song.name) private songModel: Model<Song>) { }
-
+  // Upload 
   async uploadFile(
     files: { image?: Express.Multer.File[], file?: Express.Multer.File[] },
     song_details: any
@@ -27,6 +30,7 @@ export class SongService {
         mimetype: audioFile.mimetype,
         mimetypeImage: imageFile.mimetype,
         uploadDate: new Date,
+        like: 0,
       });
       const savedSong = await newSong.save();
       return savedSong;
@@ -35,6 +39,7 @@ export class SongService {
     }
   }
 
+  // get songs..............
   async findById(fileId: string) {
     return await this.songModel.findById(fileId).exec();
   }
@@ -175,45 +180,65 @@ export class SongService {
   async getFileByName(name: string) {
     return await this.songModel.findOne({ name: name }).exec();
   }
-
-
+  // add like
+  async addLike(song_id: any) {
+    const songId = new mongoose.Types.ObjectId(song_id);
+    const c = await this.songModel.updateOne({ _id: songId }, { $inc: { like: 1 } })//, { new: true }
+    return c;
+  }
+  // remove like
+  async removeLike(song_id: any) {
+    const songId = new mongoose.Types.ObjectId(song_id);
+    const c = await this.songModel.updateOne({ _id: songId }, { $inc: { like: -1 } })//, { new: true }
+    return c;
+  }
+  // 
+  // get like count
+  async getLikeCount(songId: string) {
+    const song_id = new mongoose.Types.ObjectId(songId);
+    const song = await this.songModel.findById(song_id);
+    if (!song) {
+      throw new NotFoundException('Song not found');
+    }
+    return song.like; // Return the like count for the song
+  }
 
 }
 
- // async uploadFile(file: Express.Multer.File, song_details: any): Promise<Song> {
-  //   const { buffer, mimetype } = file;
-  //   const { song_name, rate, singer, description, permission } = song_details;
-  //   const newFile = new this.songModel({
-  //     name: song_name,
-  //     data: buffer,
-  //     singerName: singer,
-  //     description: description,
-  //     rate: rate,
-  //     permission: permission,
-  //     mimetype: mimetype,
-  //     uploadDate: new Date,
-  //   });
-  //   return newFile.save();
-  // }
+// async uploadFile(file: Express.Multer.File, song_details: any): Promise<Song> {
+//   const { buffer, mimetype } = file;
+//   const { song_name, rate, singer, description, permission } = song_details;
+//   const newFile = new this.songModel({
+//     name: song_name,
+//     data: buffer,
+//     singerName: singer,
+//     description: description,
+//     rate: rate,
+//     permission: permission,
+//     mimetype: mimetype,
+//     uploadDate: new Date,
+//   });
+//   return newFile.save();
+// }
 
-  // async uploadFiles(files: Array<Express.Multer.File>, details: any) {
-  //   const imageFile = files.find(file => file.fieldname === 'image');
-  //   const mp3File = files.find(file => file.fieldname === 'file');
-  //   // Handle image and mp3 files as per your requirements
-  //   // Access additional details
-  //   const { song_details } = details;
-  //   const { rate, song_name, permission, description, singer } = song_details;
-  //   // Process the details and files accordingly
-  //   // Return the response or perform additional operations
-  // }
+// async uploadFiles(files: Array<Express.Multer.File>, details: any) {
+//   const imageFile = files.find(file => file.fieldname === 'image');
+//   const mp3File = files.find(file => file.fieldname === 'file');
+//   // Handle image and mp3 files as per your requirements
+//   // Access additional details
+//   const { song_details } = details;
+//   const { rate, song_name, permission, description, singer } = song_details;
+//   // Process the details and files accordingly
+//   // Return the response or perform additional operations
+// }
 
-  // async searchWithInclusionCondition(keyword: string): Promise<Song[]> {
-  //   const result = await this.songModel.find({
-  //     $or: [
-  //       { name: { $regex: new RegExp(keyword, 'i') } },
-  //       { singerName: { $regex: new RegExp(keyword, 'i') } }
-  //     ]
-  //   }).exec();
+// async searchWithInclusionCondition(keyword: string): Promise<Song[]> {
+//   const result = await this.songModel.find({
+//     $or: [
+//       { name: { $regex: new RegExp(keyword, 'i') } },
+//       { singerName: { $regex: new RegExp(keyword, 'i') } }
+//     ]
+//   }).exec();
 
-  //   return result;
-  // }
+//   return result;
+// }

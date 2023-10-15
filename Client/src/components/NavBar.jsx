@@ -68,11 +68,13 @@ const NavBar = () => {
     setCurrent(e.key);
   };
   const handleUserMenuClick = (e) => {};
+
   const handleLogoutClick = () => {
     console.log("renove");
     removeCookie("access_token", { path: "/" });
     removeCookie("id", { path: "/" });
     message.success("You are now logged out ");
+    // render the page!!!! TODO:
   };
   const handleConnectClick = () => {
     navigate("/login");
@@ -187,7 +189,11 @@ const NavBar = () => {
             <Button
               type="text"
               icon={<Avatar icon={<UserOutlined />} />}
-              style={{ background: "none", border: "none", textDecoration: "none !important" }}
+              style={{
+                background: "none",
+                border: "none",
+                textDecoration: "none !important",
+              }}
             />
           </Dropdown>
         </Menu.Item>

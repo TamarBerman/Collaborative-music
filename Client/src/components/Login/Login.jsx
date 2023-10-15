@@ -19,12 +19,10 @@ export default function Login() {
   const [cookies, setCookie] = useCookies(["access_token", "id"]);
   const [post, setPost] = useState(null);
   const [form] = Form.useForm();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
   const { state } = useLocation();
   const baseURL = "http://localhost:3000";
-
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -55,8 +53,9 @@ export default function Login() {
           setCookie("id", response.data.id, { path: "/" });
         }
         message.success(email + " Logged in successfully");
-        if (state == null) navigate("/home");
-        else navigate(-1);
+        // if (state == null) navigate("/home");
+        // else navigate(-1);
+        navigate(-1);
       })
       .catch(function (error) {
         console.log(error.response.status, "Error");
@@ -73,6 +72,7 @@ export default function Login() {
     console.log(post);
   };
 
+  // on Finish Failed
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };

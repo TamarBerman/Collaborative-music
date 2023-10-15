@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Param, Res, Query, UploadedFiles, UseInterceptors, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Param, Res, Query, UploadedFiles, UseInterceptors, UseGuards, UnauthorizedException, Put } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { SongService } from './song.service';
 import { Song } from 'src/schemas/song.schema';
@@ -75,7 +75,8 @@ export class SongController {
           upload_date: song.uploadDate,
           rate: song.rate,
           permission: song.permission,
-          id: song._id
+          id: song._id,
+          like: song.like
         };
         songObjs.push(songObj);
       });
@@ -107,37 +108,78 @@ export class SongController {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching song' });
     }
   }
+
+  // add a like to a song
+  @Public()
+  @Put('/addlike')
+  async addLike(@Body() song_id: any
+  ) {
+    try {
+      console.log(song_id);
+      return await this.songService.addLike(song_id.song_id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // add a like to a song
+  @Public()
+  @Put('/removelike')
+  async removeLike(@Body() song_id: any
+  ) {
+    try {
+      return await this.songService.removeLike(song_id.song_id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //get like count
+  @Public()
+  @Get('/getLikeCount/:songId')
+  async getLikeCount(@Param('songId') songId: string) {
+    try {
+      console.log("sif"+songId);
+      // Query your database to get the like count for the specified song
+      const likeCount = await this.songService.getLikeCount(songId);
+      return { likeCount };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
 }
 
 
-  // get songs for playlist
-  // @Get('getplaylist')
-  // async getSongsByIds(@Query('ids') ids: string[], @Res() res?): Promise<Song[]> {
-  //   try {
-  //     const songs: Song[] = await this.songService.getSongsByIds(ids);
-  //     const songObjs: any[] = [];
-  //     songs.forEach(song => {
-  //       const buffer = song.data;
-  //       const bufferImage = song.imageData;
-  //       const songObj = {
-  //         imageUrl: `data:${song.mimetypeImage};base64,${bufferImage.toString('base64')}`,
-  //         audioUrl: `data:audio/mp3;base64,${buffer.toString('base64')}`,
-  //         song_name: song.name,
-  //         song_description: song.description,
-  //         singer_name: song.singerName,
-  //         upload_date: song.uploadDate,
-  //         rate: song.rate,
-  //         permission: song.permission,
-  //         id: song._id
-  //       };
-  //       songObjs.push(songObj);
-  //     });
-  //     return res.send(songObjs);
-  //   } catch (error: any) {
-  //     console.error('Error fetching songs:', error);
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching songs' });
-  //   }
-  // }
+// get songs for playlist
+// @Get('getplaylist')
+// async getSongsByIds(@Query('ids') ids: string[], @Res() res?): Promise<Song[]> {
+//   try {
+//     const songs: Song[] = await this.songService.getSongsByIds(ids);
+//     const songObjs: any[] = [];
+//     songs.forEach(song => {
+//       const buffer = song.data;
+//       const bufferImage = song.imageData;
+//       const songObj = {
+//         imageUrl: `data:${song.mimetypeImage};base64,${bufferImage.toString('base64')}`,
+//         audioUrl: `data:audio/mp3;base64,${buffer.toString('base64')}`,
+//         song_name: song.name,
+//         song_description: song.description,
+//         singer_name: song.singerName,
+//         upload_date: song.uploadDate,
+//         rate: song.rate,
+//         permission: song.permission,
+//         id: song._id
+//       };
+//       songObjs.push(songObj);
+//     });
+//     return res.send(songObjs);
+//   } catch (error: any) {
+//     console.error('Error fetching songs:', error);
+//     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching songs' });
+//   }
+// }
 
 // // fetch one song
 // @Post('/fetch')

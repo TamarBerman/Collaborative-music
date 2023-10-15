@@ -12,6 +12,8 @@ import {
   Spin,
   Divider,
 } from "antd";
+
+
 import ImgCrop from "antd-img-crop";
 import { React, useState } from "react";
 import { useForm } from "antd/lib/form/Form";
@@ -34,6 +36,9 @@ const FileUpload = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [form] = useForm();
   const [loading, setLoading] = useState(false);
+
+  const [metadata, setMetadata] = useState({});
+
   const [fileList, setFileList] = useState([
     // {
     //   uid: "-1",
@@ -117,6 +122,7 @@ const FileUpload = () => {
     }
 
     const formData = new FormData();
+    
     formData.append("file", file);
     formData.append("image", image);
     formData.append("song_details[rate]", rate);

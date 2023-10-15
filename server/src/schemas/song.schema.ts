@@ -34,7 +34,8 @@ export class Song extends Document {
   @Prop({ default: Date.now() })
   uploadDate: Date;
 
-  
+  @Prop()
+  like: number;
 }
 
 export const SongSchema = SchemaFactory.createForClass(Song);

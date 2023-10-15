@@ -16,6 +16,7 @@ import { ConfigProvider, theme } from "antd";
 import PageHeader from "./components/PageHeader";
 import "./antd-custom.css";
 import "./App.css";
+import ManageSongs from "./components/Manager/ManageSongs";
 
 const App = () => {
   // Dark mode
@@ -55,6 +56,10 @@ const App = () => {
             <Route path="/music" element={<SongsList />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/playlist" element={<Playlist />} />
+
+
+            <Route path="/manageSongs" element={<ManageSongs />} />
+
             <Route path="*" element={<Error404 />} />
           </Routes>
         </ConfigProvider>

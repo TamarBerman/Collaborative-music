@@ -16,15 +16,15 @@ export class PlaylistService {
             const playlist = await this.playlistModel.findOne({ userId });
             if (playlist) {
 
-                const songExists = playlist.list.find(song => song===songId.songId);
+                const songExists = playlist.list.find(song => song === songId.songId);
                 if (!songExists) {
 
                     playlist.list.push(songId.songId);
                     return playlist.save();
                 }
-                else{
+                else {
                     throw new Error("Song exists in playlist");
-                    
+
                 }
             }
             const userExists = await this.usersService.findUserById(userId);
@@ -36,7 +36,7 @@ export class PlaylistService {
                 throw new Error("User not found");
             }
         } catch (error) {
-            throw new Error(error.message||"ERROR");
+            throw new Error(error.message || "ERROR");
         }
     }
 
@@ -88,6 +88,31 @@ export class PlaylistService {
         const decodedToken = this.jwtService.decode(tokenValue) as { user_id: string, password: string };
         const user_id = decodedToken.user_id;
         return user_id;
+    }
+
+    async checkSongExistsInPlaylist(userId: string, songId: any): Promise<Playlist> {
+        try {
+            let exists;
+            const playlist = await this.playlistModel.findOne({ userId: userId });
+            if (!playlist) {
+                exists = false;
+                return exists;
+                // +
+            }
+            // Find the index of the song in the playlist array
+            const index = playlist.list.findIndex(item => item === songId);
+            if (index !== -1) {
+                exists = true;
+                // -
+            }
+            else {
+                exists = false;
+                // +
+            }
+            return exists;
+        } catch (error) {
+            throw new Error('Error error checking if song exists in playlist');
+        }
     }
 
 

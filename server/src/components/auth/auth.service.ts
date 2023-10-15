@@ -53,5 +53,13 @@ export class AuthService {
   async updateProfile(user_id: string, newUser: any) {
     return await this.usersService.updateUserById(user_id, newUser);
   }
+   getUserIdFromToken(request: any) {
+    // Ensure that the token starts with "Bearer " and extract the actual token value
+    const tokenValue = request.headers.authorization?.replace('Bearer ', '') || null;
+    // Use JwtService to decode the token and extract the payload
+    const decodedToken = this.jwtService.decode(tokenValue) as { user_id: string, password: string };
+    const user_id = decodedToken.user_id;
+    return user_id;
+  }
 
 }
