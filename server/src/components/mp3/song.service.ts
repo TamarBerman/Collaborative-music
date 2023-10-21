@@ -1,49 +1,141 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Song } from '../../schemas/song.schema';
-import { Console } from 'console';
 import * as mongoose from 'mongoose';
+import { parseBuffer } from 'music-metadata';
+import * as mm from 'music-metadata/lib/core';
+import { AbuseReportsService } from '../abuseReports/abuseReports.service';
 
 
 @Injectable()
 export class SongService {
-  constructor(@InjectModel(Song.name) private songModel: Model<Song>) { }
+  constructor(@InjectModel(Song.name) private songModel: Model<Song>
+    // ,private abuseReportsService: AbuseReportsService,
+  ) { }
   // Upload 
-  async uploadFile(
+  async uploadFile(userId: string,
     files: { image?: Express.Multer.File[], file?: Express.Multer.File[] },
     song_details: any
   ): Promise<Song> {
-    try {
+    // try {
       // Access the uploaded files
       const imageFile = files.image ? files.image[0] : null;
       const audioFile = files.file ? files.file[0] : null;
+
+      const metadata = await mm.parseBuffer(audioFile.buffer, 'audio/mp3');
       const { song_name, rate, singer, description, permission } = song_details;
-      const newSong = new this.songModel({
+      console.log(metadata.common.picture?metadata.common.picture[0].data:null);
+      console.log(imageFile.buffer);
+
+      const uploadedSong = {
         name: song_name,
         data: audioFile.buffer,
-        singerName: singer,
-        description: description,
         rate: rate,
         permission: permission,
-        imageData: imageFile.buffer,
+        imageData: metadata.common.picture?metadata.common.picture[0].data: imageFile.buffer,
         mimetype: audioFile.mimetype,
-        mimetypeImage: imageFile.mimetype,
+        mimetypeImage: metadata.common.picture?metadata.common.picture[0].format:  imageFile.mimetype,
         uploadDate: new Date,
         like: 0,
-      });
+        userIdUpload: userId,
+        artists: metadata.common.artists || singer==""?['anonym']:[singer],//מפה מטהדתה
+        album: metadata.common.album,
+        duration: metadata.format.duration,
+        title: metadata.common.title || song_name || 'לא ידוע',
+        language: metadata.common.language,
+        website: metadata.common.website,
+        genre: metadata.common.genre,
+        comment: metadata.common.comment,
+        year: metadata.common.year || (new Date()).getFullYear(),
+        description: metadata.common.description || description
+      }
+      const newSong = new this.songModel(uploadedSong);
+
+      if (await this.checkIfSongExists(newSong))
+        throw new ConflictException('Song exists');
+      //  בדיקה האם השיר קיים במאגר
+      // const newSong = new this.songModel(uploadedSong);
       const savedSong = await newSong.save();
       return savedSong;
-    } catch (error) {
-      throw new Error('Failed to upload files.');
-    }
+    // }
+    //  catch (error) {
+    //   console.log(error);
+    //   throw new Error(error);
+    // }
   }
 
+  async checkIfSongExists(uploadedSong: any) {
+    const { duration, year, artists, album, name } = uploadedSong;
+
+    // Check for songs with the same duration
+    const songsWithSameDuration = await this.songModel.find({ duration: duration });
+
+    if (songsWithSameDuration.length === 0) {
+      console.log("no duration")
+      return false;
+    }
+
+    // Check for songs with the same year
+    const songsWithSameYear = songsWithSameDuration.filter(song => song.year === year);
+
+    if (songsWithSameYear.length === 0) {
+      console.log("no year")
+
+      return false;
+    }
+
+    // Check for songs with the same artists
+    const songsWithSameArtists = songsWithSameYear.filter(song => song.artists[0] === artists[0]);
+
+    if (songsWithSameArtists.length === 0) {
+      console.log("no artists")
+
+      return false;
+    }
+
+    // Check for songs with the same album
+    const songsWithSameAlbum = songsWithSameArtists.filter(song => song.album === album);
+
+    if (songsWithSameAlbum.length === 0) {
+      console.log("no albume")
+
+      return false;
+    }
+
+    // Check for songs with the same name
+    const songsWithSameName = songsWithSameAlbum.filter(song => song.name === name);
+
+    return songsWithSameName.length > 0;
+  }
+
+
+  // find 1 song 
+  async findSong(songId: string): Promise<Song> {
+
+    const song_id = new mongoose.Types.ObjectId(songId);
+    const song = await this.songModel.findById(song_id);
+    if (!song) {
+      throw new NotFoundException('Song not found');
+    }
+    return song;
+  }
+
+  // delete song 
+  async deleteSong(songId: string) {
+    const song_id = new mongoose.Types.ObjectId(songId);
+    const deletedSong = await this.songModel.findByIdAndDelete(song_id);
+    if (!deletedSong) {
+      throw new NotFoundException('Song not found');
+    }
+    return deletedSong;
+  }
   // get songs..............
   async findById(fileId: string) {
     return await this.songModel.findById(fileId).exec();
   }
 
+  // get all songs INFO
   async findAll(): Promise<Song[]> {
     return await this.songModel.find().exec();
   }
@@ -115,7 +207,6 @@ export class SongService {
         .limit(limit)    // Limit the number of documents returned
         .skip(offset).exec();   // Skip the specified number of documents
       return songs;
-
     } catch (error) {
       // Handle any errors that occur during the database operation
       throw new Error('Error retrieving songs: ' + error);
@@ -154,7 +245,6 @@ export class SongService {
     return len;
   }
 
-
   // filtering & sorting 
   async filterAndSortSongs(songs: Song[], minRate: number): Promise<Song[]> {
     const filteredSongs = songs.filter((song) => {
@@ -192,7 +282,7 @@ export class SongService {
     const c = await this.songModel.updateOne({ _id: songId }, { $inc: { like: -1 } })//, { new: true }
     return c;
   }
-  // 
+
   // get like count
   async getLikeCount(songId: string) {
     const song_id = new mongoose.Types.ObjectId(songId);
@@ -201,6 +291,18 @@ export class SongService {
       throw new NotFoundException('Song not found');
     }
     return song.like; // Return the like count for the song
+  }
+
+  // רשימת דיווחים
+  async getAllAbuseReports() {
+
+    // const abuseReports = await this.abuseReportsService.getAllAbuseReports();
+    // const abuseReportsList=[];
+    // abuseReports.forEach(report => {
+    //   abuseReportsList.push(report.songId);
+    // })
+    // console.log(abuseReportsList);
+    // return abuseReportsList;
   }
 
 }

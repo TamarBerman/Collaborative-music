@@ -16,7 +16,6 @@ import {
       const request = context.switchToHttp().getRequest();
       const token = this.extractTokenFromHeader(request);
       if (!token) {
-        console.log("if (!token)")
         throw new UnauthorizedException('You are not logged in. Please log in to perform this action.');
       }
       try {
@@ -30,8 +29,6 @@ import {
         // so that we can access it in our route handlers
         request['user'] = payload;
       } catch {
-        console.log("catch")
-
         throw new UnauthorizedException('You are not logged in. Please log in to perform this action.');
       }
       return true;

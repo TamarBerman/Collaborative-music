@@ -24,7 +24,6 @@ export class PlaylistService {
                 }
                 else {
                     throw new Error("Song exists in playlist");
-
                 }
             }
             const userExists = await this.usersService.findUserById(userId);

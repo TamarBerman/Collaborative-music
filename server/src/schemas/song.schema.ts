@@ -14,9 +14,6 @@ export class Song extends Document {
   singerName: string;
 
   @Prop()
-  description: string;
-
-  @Prop()
   rate: number;
 
   @Prop()
@@ -36,6 +33,39 @@ export class Song extends Document {
 
   @Prop()
   like: number;
+
+  @Prop()
+  userIdUpload: string;
+
+  @Prop({type:[], default:['anonym']})
+  artists: string[];
+
+  @Prop({default:'anonym'})
+  album: string;
+
+  @Prop()
+  duration: number;
+
+  @Prop() //{default:"לא ידוע"}
+  title: string;
+
+  @Prop({default:"?"})
+  language: string;
+
+  @Prop({type:[]})
+  genre: string[];
+
+  @Prop({type:[]})
+  comment: string;
+
+  @Prop({default:(new Date()).getFullYear()})
+  year: number;
+
+  @Prop({default:"--"})
+  description: string;;
+
+  
+
 }
 
 export const SongSchema = SchemaFactory.createForClass(Song);

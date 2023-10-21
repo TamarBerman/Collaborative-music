@@ -17,7 +17,6 @@ export class PlaylistController {
             const user_id = this.authService.getUserIdFromToken(request);
             return await this.playlistService.addSongToPlaylist(user_id, songId);
         } catch (error) {
-            console.log(error.message);
             if (error.message === "User not found") {
                 return { message: "User not found", type: "warning", status: 404 };
             } else if (error.message === "Song exists in playlist") {
