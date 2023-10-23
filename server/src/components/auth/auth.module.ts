@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { jwtConstants } from './constants';
+import { PlaylistModule } from '../playlist/playlist.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { jwtConstants } from './constants';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '60m' },
     }),
+    // PlaylistModule
   ],
   providers: [
     AuthService,

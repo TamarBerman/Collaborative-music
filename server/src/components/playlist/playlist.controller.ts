@@ -67,4 +67,17 @@ export class PlaylistController {
             }
         }
     }
+
+    // @UseGuards(AuthGuard)
+    // @Get('getUsersPlaylists')
+    // async getUsersPlaylistsNames(@Req() request, @Param('songId') songId: string) {
+    //     try {
+    //         const user_id = await this.playlistService.getUserIdFromToken(request.headers.authorization || null);
+    //         console.log(`User ${user_id}`)
+    //         return await this.playlistService.getUsersPlaylistsNames(user_id);
+    //     } catch (error) {
+    //         // throw { message: "couldnt get users playlists", type: "error", status: 500 };
+    //         throw error;
+    //     }
+    // }
 }

@@ -9,7 +9,6 @@ import { AuthService } from '../auth/auth.service'
 import { AdminGuard } from '../auth/admin.guard';
 
 
-
 @Controller('mp3')
 export class SongController {
   constructor(private songService: SongService, private authService: AuthService) { }
@@ -26,7 +25,7 @@ export class SongController {
     @UploadedFiles() files: { image?: Express.Multer.File[], file?: Express.Multer.File[] },
     @Body() details: any,
     @Req() request,
-    @Res({ passthrough: true }) res 
+    @Res({ passthrough: true }) res
   ) {
     try {
       const userId = this.authService.getUserIdFromToken(request)
@@ -55,21 +54,22 @@ export class SongController {
     return await this.songService.getLengthSearch(search);
   }
 
-
-
   // get songs for all and for search.
   @Public()
   @Get('getsongs')
-  async search(@Query('filter') filter?: any, @Query('search') search?: string, @Query('limit') limit?: number,
-    @Query('offset') offset?: number, @Query('ids') ids?: string[], @Res() res?): Promise<Song[]> {
+  async search(@Query('filter') filter?: any, @Query('sort') sort?: any, @Query('search') search?: string, @Query('limit') limit?: number,
+    @Query('offset') offset?: number, @Query('playlistSongIds') playlistSongIds?: string[], @Res() res?): Promise<Song[]> {
     try {
+      console.log(`filter: ${filter}, sort: ${sort}`);
       let songs: Song[] = [];
-      console.log("filter ", filter);
-      console.log("ids", ids);
-      if (ids)
-        songs = await this.songService.getSongsByIds(limit, offset, ids);
-      else
-        songs = await this.songService.getSongs(search, limit, offset, filter);
+      let serviceResponse: any;
+      if (playlistSongIds)
+        songs = await this.songService.getSongsByIds(limit, offset, playlistSongIds);
+      else {
+        serviceResponse = await this.songService.getSongs(search, limit, offset, filter, sort);
+        songs = serviceResponse.songs || serviceResponse;
+      }
+
       const songObjs: any[] = [];
       songs.forEach(song => {
         const buffer = song.data;
@@ -92,11 +92,13 @@ export class SongController {
           genre: song.genre || [],
           comment: song.comment || [],
           year: song.year,
-          description: song.description
+          description: song.description,
+          category: song.category || ['other']
         };
         songObjs.push(songObj);
       });
-      return res.send(songObjs);
+      console.log(serviceResponse.songListLength || null);
+      return res.send({ songs: songObjs, songListLength: serviceResponse.songListLength || null });
     } catch (error: any) {
       console.error('Error fetching songs:', error);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching songs' });
@@ -130,7 +132,9 @@ export class SongController {
           genre: song.genre || [],
           comment: song.comment || [],
           year: song.year,
-          description: song.description
+          description: song.description,
+          // 
+          category: song.category || ['other']
         };
         return res.send(songObj);
       }
@@ -237,6 +241,8 @@ export class SongController {
           year: songInfo.year,
           description: songInfo.description,
           tags: tag,
+          // 
+          category: songInfo.category || ['other']
 
         };
         songInfoObjs.push(songInfoObj);
@@ -247,6 +253,5 @@ export class SongController {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching songs' });
     }
   }
-
 
 }

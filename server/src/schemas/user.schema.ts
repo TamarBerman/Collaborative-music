@@ -3,7 +3,7 @@ import { Document } from "mongoose";
 
 export type UserDocument = User & Document;
 
-@Schema({versionKey:false})
+@Schema({ versionKey: false })
 export class User {
 
     @Prop()
@@ -12,12 +12,11 @@ export class User {
     @Prop()
     password: string;
 
-    @Prop({unique:true, lowercase:true})
+    @Prop({ unique: true, lowercase: true })
     email: string;
 
-    @Prop()
-    isVIP: boolean;
-
+    @Prop({ default: [] })
+    playlists: string[];
 
 }
 

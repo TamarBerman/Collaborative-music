@@ -37,10 +37,10 @@ export class Song extends Document {
   @Prop()
   userIdUpload: string;
 
-  @Prop({type:[], default:['anonym']})
+  @Prop({ type: [], default: ['anonym'] })
   artists: string[];
 
-  @Prop({default:'anonym'})
+  @Prop({ default: 'anonym' })
   album: string;
 
   @Prop()
@@ -49,22 +49,23 @@ export class Song extends Document {
   @Prop() //{default:"לא ידוע"}
   title: string;
 
-  @Prop({default:"?"})
+  @Prop({ default: "?" })
   language: string;
 
-  @Prop({type:[]})
+  @Prop({ type: [] })
   genre: string[];
 
-  @Prop({type:[]})
+  @Prop({ type: [] })
   comment: string;
 
-  @Prop({default:(new Date()).getFullYear()})
+  @Prop({ default: (new Date()).getFullYear() })
   year: number;
 
-  @Prop({default:"--"})
-  description: string;;
+  @Prop({ default: "--" })
+  description: string;
 
-  
+  @Prop({ default: ["other"] })
+  category: string[];
 
 }
 

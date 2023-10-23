@@ -5,12 +5,13 @@ import { Model } from "mongoose";
 import { UsersService } from "../users/users.service";
 import { constants } from "buffer";
 import { JwtService } from "@nestjs/jwt";
+import { AuthModule } from "../auth/auth.module";
 
 @Injectable()
 export class PlaylistService {
-    constructor(@InjectModel(Playlist.name) private playlistModel: Model<Playlist>,
-        private usersService: UsersService, private jwtService: JwtService) { }
-
+    constructor(@InjectModel(Playlist.name) private playlistModel: Model<Playlist>
+        , private usersService: UsersService,
+        private jwtService: JwtService) { }
     async addSongToPlaylist(userId: string, songId: any): Promise<Playlist> {
         try {
             const playlist = await this.playlistModel.findOne({ userId });
@@ -113,6 +114,18 @@ export class PlaylistService {
             throw new Error('Error error checking if song exists in playlist');
         }
     }
+
+    // async getUsersPlaylistsNames(userId: string) {
+    //     // const playlists = await this.playlistModel.find({ userId: userId });
+    //     const userPlaylists = await this.usersService.getUsersPlaylists(userId);
+    //     console.log(userPlaylists);
+    //     // Find the playlists in the playlistModel using the list of IDs
+    //     const playlists = await this.playlistModel.find({ _id: { $in: userPlaylists } });
+    //     // Extract the names from the playlist documents
+    //     const playlistNames = playlists.map(playlist => playlist.name);
+    //     console.log(playlistNames);
+    //     return playlistNames;
+    // }
 
 
 }

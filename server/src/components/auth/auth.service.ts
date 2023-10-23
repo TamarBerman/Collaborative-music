@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { PlaylistService } from '../playlist/playlist.service';
 import { Types } from 'mongoose';
 import { adminCredentials } from './constants';
 
@@ -9,6 +10,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    // private playlistService: PlaylistService,
   ) { }
 
   async signIn(email: string, password: string) {
@@ -22,10 +24,12 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     const payload = { user_id: id, password: user.password };
-
+    // const playlists= this.playlistService.getUsersPlaylistsNames(id);
     return {
       access_token: await this.jwtService.signAsync(payload),
-      id: id
+      id: id,
+      user: user, 
+      // playlists: playlists
     };
   }
 
@@ -34,7 +38,7 @@ export class AuthService {
     if (findUser != null) {
       throw new UnauthorizedException('go to login');
     }
-    const { user, id } = await this.usersService.createUser({ email: email, password: password, name: name, isVIP: false });
+    const { user, id } = await this.usersService.createUser({ email: email, password: password, name: name, playlists:[]});
     const payload = { user_id: id, password: user.password };
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -80,8 +84,8 @@ export class AuthService {
         username: user.name,
         password: user.password,
         email: user.email,
-        isVIP: user.isVIP,
         userId: user._id,
+        playlist:user.playlists
       }
       usersList.push(newUser);
     })
