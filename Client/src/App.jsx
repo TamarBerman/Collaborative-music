@@ -17,6 +17,12 @@ import PageHeader from "./components/PageHeader";
 import "./antd-custom.css";
 import "./App.css";
 import ManageSongs from "./components/Manager/ManageSongs";
+import ManageUsers from "./components/Manager/ManageUsers";
+import AdminLayout from "./components/AdminLayout";
+import AdminPage from "./components/Manager/AdminPage";
+
+import he_IL from 'antd/es/locale/he_IL';
+
 
 const App = () => {
   // Dark mode
@@ -34,31 +40,34 @@ const App = () => {
         }}
       >
         <ConfigProvider
+        locale={he_IL}
           theme={{
             algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+            token: {
+              // fontFamily: 'ChilankaRegular',
+              fontFamily: 'NunitoVariableFont_wght',
+
+              fontSize:"19px",
+            }
           }}
         >
-          <NavBar />
-          {/* <PageHeader  /> */}
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/home" element={<Home />} />
-            <Route
-              path="/upload"
-              element={<FileUpload />}
-              componentName="Upload"
-            />
-            <Route path="/music/:song" element={<Player />} />
-            <Route path="/playlist/:song" element={<Player />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/music" element={<SongsList />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/playlist" element={<Playlist />} />
+            <Route path="/" element={<NavBar><Home /></NavBar>}/>
+            <Route path="/login" element={<NavBar><Login /></NavBar>} />
+            <Route path="/register" element={<NavBar><Register /></NavBar>} /> 
+            <Route path="/home" element={<NavBar><Home /></NavBar>} />
+            <Route path="/upload" element={<NavBar><FileUpload /></NavBar>}/>
+            <Route path="/music/:song" element={<NavBar><Player /></NavBar>} />
+            <Route path="/playlist/:song" element={<NavBar><Player /></NavBar>} />
+            <Route path="/about" element={<NavBar><About /></NavBar>} />
+            <Route path="/music" element={<NavBar><SongsList /></NavBar>} />
+            <Route path="/profile" element={<NavBar><Profile /></NavBar>} />
+            <Route path="/playlist" element={<NavBar><Playlist /></NavBar>} />
 
-
-            <Route path="/manageSongs" element={<ManageSongs />} />
+            <Route path="/admin1/manageSongs" element={<AdminLayout><ManageSongs /></AdminLayout>} />
+            <Route path="/admin1/manageUsers" element={<AdminLayout><ManageUsers /></AdminLayout>} />
+            <Route path="/admin1" element={<AdminLayout><AdminPage/></AdminLayout>} />
+            <Route path="/admin1/*" element={<AdminLayout><AdminPage/></AdminLayout>} />
 
             <Route path="*" element={<Error404 />} />
           </Routes>

@@ -13,15 +13,15 @@ import axios from "axios";
 import { useCookies } from "react-cookie";
 import "../../index.css";
 import "../../antd-custom.css"; // Import your custom styles
-
+import NavBar from "../NavBar";
 
 export default function Login() {
   const [cookies, setCookie] = useCookies(["access_token", "id"]);
-  const [post, setPost] = useState(null);
   const [form] = Form.useForm();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
   const { state } = useLocation();
+
   const baseURL = "http://localhost:3000";
   useEffect(() => {
     const handleResize = () => {
@@ -41,7 +41,7 @@ export default function Login() {
       .then((response) => {
         //200
         console.log(response.data);
-        setPost(response.data);
+        console.log(response.data?.user?.name);
         if (cookies.access_token) {
           console.log("tr");
           // Update the existing cookie value
@@ -52,9 +52,8 @@ export default function Login() {
           setCookie("access_token", response.data.access_token, { path: "/" });
           setCookie("id", response.data.id, { path: "/" });
         }
-        message.success(email + " Logged in successfully");
+        message.success(response.data.user.name + " Logged in successfully");
         // if (state == null) navigate("/home");
-        // else navigate(-1);
         navigate(-1);
       })
       .catch(function (error) {
@@ -69,7 +68,6 @@ export default function Login() {
       .finally(function () {
         form.resetFields();
       });
-    console.log(post);
   };
 
   // on Finish Failed
@@ -83,7 +81,7 @@ export default function Login() {
     border: "none", // Remove the default border
     fontSize: "24px", // Adjust the font size to make it bigger
     marginBottom: "60px",
-    marginTop: "40px"
+    marginTop: "40px",
   };
   const { Title } = Typography;
   return (

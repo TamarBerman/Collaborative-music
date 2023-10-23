@@ -17,44 +17,7 @@ import { useCookies } from "react-cookie";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const items = [
-  {
-    label: <Link to={"/"}>Home</Link> && <Link to={"/home"}>Home</Link>,
-    key: "home",
-    icon: <HomeOutlined />,
-  },
-  {
-    label: <Link to={"/music"}> Music</Link>,
-    key: "music",
-    icon: <PlayCircleOutlined />,
-  },
-  {
-    label: <Link to={"/playlist"}>Playlist</Link>,
-    key: "playlist",
-    icon: <CustomerServiceOutlined />,
-  },
-  {
-    label: <Link to={"/about"}> About</Link>,
-    key: "about",
-    icon: <AliwangwangOutlined />,
-  },
-  {
-    label: <Link to={"/uplaod"}> Uplaod</Link>,
-    key: "uplaod",
-    icon: <UploadOutlined />,
-  },
-  {
-    label: <Link to={"/login"}>Login</Link>,
-    key: "login",
-    icon: <LoginOutlined />,
-  },
-  {
-    label: <Link to={"/register"}>Register</Link>,
-    key: "register",
-    icon: <TeamOutlined />,
-  },
-];
-const NavBar = () => {
+const NavBar = ({userName, children }) => {
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const [current, setCurrent] = useState("mail");
   const isLoggedIn = !!cookies.access_token; // Check if access_token exists
@@ -84,13 +47,13 @@ const NavBar = () => {
   };
 
   const userMenu = (
-    <Menu onClick={handleUserMenuClick}>
+    <Menu onClick={handleUserMenuClick} style={{ margin: 20 }}>
       {isLoggedIn && (
         <Menu.Item
           key="profile"
           icon={<UserOutlined />}
           onClick={handleProfileClick}
-          style={{ fontSize: "17px" }}
+          style={{ padding: 10 }}
         >
           My Profile
         </Menu.Item>
@@ -101,7 +64,7 @@ const NavBar = () => {
           key="logout"
           icon={<LogoutOutlined />}
           onClick={handleLogoutClick}
-          style={{ fontSize: "17px" }}
+          style={{ padding: 10 }}
         >
           Logout
         </Menu.Item>
@@ -111,7 +74,7 @@ const NavBar = () => {
           key="connect"
           icon={<LoginOutlined />}
           onClick={handleConnectClick}
-          style={{ fontSize: "17px" }}
+          style={{ fontSize: "20px" }}
         >
           Connect
         </Menu.Item>
@@ -119,86 +82,154 @@ const NavBar = () => {
     </Menu>
   );
   return (
-    <Affix>
-      <Menu
-        mode="horizontal"
-        selectedKeys={[current]}
-        onClick={onClick}
-        style={{
-          backgroundColor: "black",
-          height: "170%",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Menu.Item key="logo" style={{ marginRight: "auto", fontSize: "20px" }}>
-          <Link to={"/"}>Home</Link>
-        </Menu.Item>
-
-        <Menu.Item
-          key="music"
-          icon={<PlayCircleOutlined />}
-          style={{ fontSize: "17px" }}
-        >
-          <Link to={"/music"}>Music</Link>
-        </Menu.Item>
-
-        <Menu.Item
-          key="playlist"
-          icon={<CustomerServiceOutlined />}
-          style={{ fontSize: "17px" }}
-        >
-          <Link to={"/playlist"}>Playlist</Link>
-        </Menu.Item>
-
-        <Menu.Item
-          key="upload"
-          icon={<UploadOutlined />}
-          style={{ fontSize: "17px" }}
-        >
-          <Link to={"/upload"}>Upload</Link>
-        </Menu.Item>
-
-        <Menu.Item
-          key="about"
-          icon={<AliwangwangOutlined />}
-          style={{ fontSize: "17px" }}
-        >
-          <Link to={"/about"}>About</Link>
-        </Menu.Item>
-
-        <Menu.Item
-          key="login"
+    <>
+      <Affix>
+        <Menu
+          mode="horizontal"
+          selectedKeys={[current]}
+          onClick={onClick}
           style={{
-            marginLeft: "auto",
-            fontSize: "17px",
+            backgroundColor: "black",
+            height: "170%",
+            display: "flex",
+            alignItems: "center",
           }}
         >
-          <Link to={"/login"}>Login</Link>
-        </Menu.Item>
+          <Menu.Item
+            key="logo"
+            style={{ marginRight: "auto", fontSize: "25px" }}
+          >
+            <Link to={"/"}>Home</Link>
+          </Menu.Item>
 
-        <Menu.Item key="register" style={{ fontSize: "17px" }}>
-          <Link to={"/register"}>Register</Link>
-        </Menu.Item>
+          <Menu.Item
+            key="music"
+            icon={<PlayCircleOutlined />}
+            style={{ fontSize: "20px" }}
+          >
+            <Link to={"/music"}>Music</Link>
+          </Menu.Item>
 
-        <Menu.Item
-          key="user-menu"
-          style={{ marginLeft: "0.5rem", fontSize: "17px" }}
-        >
-          <Dropdown overlay={userMenu} trigger={["hover"]}>
-            <Button
-              type="text"
-              icon={<Avatar icon={<UserOutlined />} />}
-              style={{
-                background: "none",
-                border: "none",
-                textDecoration: "none !important",
-              }}
-            />
-          </Dropdown>
-        </Menu.Item>
-      </Menu>
-    </Affix>
+          <Menu.Item
+            key="playlist"
+            icon={<CustomerServiceOutlined />}
+            style={{ fontSize: "20px" }}
+          >
+            <Link to={"/playlist"}>Playlist</Link>
+          </Menu.Item>
+
+          <Menu.Item
+            key="upload"
+            icon={<UploadOutlined />}
+            style={{ fontSize: "20px" }}
+          >
+            <Link to={"/upload"}>Upload</Link>
+          </Menu.Item>
+
+          <Menu.Item
+            key="about"
+            icon={<AliwangwangOutlined />}
+            style={{ fontSize: "20px" }}
+          >
+            <Link to={"/about"}>About</Link>
+          </Menu.Item>
+
+          {/* <Menu.Item
+            key="login"
+            style={{
+              marginLeft: "auto",
+              fontSize: "20px",
+            }}
+          >
+            <Link to={"/login"}>Login</Link>
+          </Menu.Item> */}
+          <Menu.Item
+            key="login"
+            style={{
+              marginLeft: "auto",
+              fontSize: "20px",
+            }}
+          >
+            <Link to= "/login">
+              <Button
+                type="text"
+                style={{
+                  borderRadius: "20px", // Adjust the value as needed
+                  padding: "7px 20px", // Adjust padding as needed
+                  border: "1px solid #fff", // Border styles
+                  display: "flex",
+                  alignItems: "center", // Center vertically within the button
+                  justifyContent: "center", // Center horizontally within the button
+                  // marginBottom: "9px",
+                }}
+                className="custom-button"
+              >
+                Login
+              </Button>
+            </Link>
+          </Menu.Item>
+
+          <Menu.Item key="register" style={{ fontSize: "20px" }}>
+            <Link to={"/register"}>
+              <Button
+                type="text"
+                style={{
+                  borderRadius: "20px", // Adjust the value as needed
+                  padding: "7px 20px", // Adjust padding as needed
+                  border: "1px solid #fff", // Border styles
+                  display: "flex",
+                  alignItems: "center", // Center vertically within the button
+                  justifyContent: "center", // Center horizontally within the button
+                  // marginBottom: "9px",
+                }}
+                className="custom-button"
+              >
+                Register
+              </Button>
+            </Link>
+          </Menu.Item>
+
+          <Menu.Item
+            key="user-menu"
+            style={{ marginLeft: "0.5rem", fontSize: "20px" }}
+          >
+            {/* <p>Hi {userName}</p> */}
+            <Dropdown overlay={userMenu} trigger={["hover"]}>
+              <Button
+                type="text"
+                icon={
+                  <Avatar
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    icon={
+                      <UserOutlined
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: "20px",
+                        }}
+                      />
+                      
+                    }
+                  
+                  />
+                }
+                style={{
+                  background: "none",
+                  border: "none",
+                  textDecoration: "none !important",
+                }}
+              />
+            </Dropdown>
+          </Menu.Item>
+        </Menu>
+      </Affix>
+      {children}
+    </>
   );
 };
 

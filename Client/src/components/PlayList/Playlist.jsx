@@ -11,8 +11,7 @@ const Playlist = () => {
   const [startSearch, setStartSearch] = useState(false);
   const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const loggedIn = !!cookies.access_token;
-  const [userId, setUserId] = useState("");
-  const [songsId, setSongsId] = useState("");
+  const [playlistSongIds, setPlaylistSongIds] = useState("");
   const [loading, setLoading] = useState(true); // Add a loading state
 
   const baseURL = "http://localhost:3000/mp3";
@@ -32,13 +31,31 @@ const Playlist = () => {
         },
       })
       .then((response) => {
-        setSongsId(response.data);
-        setLoading(false); // Set loading to false once data fetching is complete
+        setPlaylistSongIds(response.data);
       })
       .catch((error) => {
         console.log(error);
-        setLoading(false); // Set loading to false on error as well
+      })
+      .finally(() => {
+        setLoading(false);
       });
+    // axios
+    //   .get(`${baseURL}/getUsersPlaylists`, {
+    //     headers: {
+    //       Authorization: `Bearer ${cookies.access_token}`,
+    //     },
+    //   })
+    //   .then((response) => {
+    //     console.log("in getUsersPlaylists");
+
+    //     console.log(response.data);
+    //   })
+    //   .catch((error) => {
+    //     console.log(error);
+    //   })
+    //   .finally(() => {
+    //     setLoading(false);
+    //   });
   }, []); // Empty dependency array to run the effect only once on mount
 
   const playlistcontainer = {
@@ -54,7 +71,7 @@ const Playlist = () => {
       <Spin spinning={loading} tip="Loading" size="large">
         <>
           {loggedIn && !loading && (
-            <SongsList userId={"userId"} songsIds={songsId} />
+            <SongsList playlistNum={1} playlistSongIds={playlistSongIds} />
           )}
           {!loggedIn && (
             <>

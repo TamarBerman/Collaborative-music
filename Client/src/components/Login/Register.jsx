@@ -15,7 +15,6 @@ import { useCookies } from "react-cookie";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useState, useEffect } from "react";
 
-
 const formItemLayout = {
   labelCol: {
     xs: { span: 24 },
@@ -61,12 +60,10 @@ const Register = () => {
       .then((response) => {
         console.log(response.data);
         if (cookies.access_token) {
-          console.log("tr");
           // Update the existing cookie value
           setCookie("access_token", response.data.access_token, { path: "/" });
           setCookie("access_token", response.data.id, { path: "/" });
         } else {
-          console.log("fl");
           setCookie("access_token", response.data.access_token, { path: "/" });
           setCookie("id", response.data.id, { path: "/" });
         }

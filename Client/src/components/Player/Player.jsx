@@ -7,7 +7,6 @@ import "react-h5-audio-player/lib/styles.css";
 import { useLocation, useNavigate } from "react-router-dom";
 const baseUrl = "http://localhost:3000/mp3";
 const reportsURL = "http://localhost:3000/abuse-reports";
-
 // npm install react-h5-audio-player
 import {
   LikeOutlined,
@@ -325,6 +324,8 @@ const Player = () => {
   const siderStyle = {
     backgroundColor: "black",
     width: "300px",
+    // height: "300px",
+
     flex: "0 0 300px", // This ensures a fixed width of 300px
   };
   const footerStyle = {
@@ -386,9 +387,9 @@ const Player = () => {
         </Sider>
         <Layout>
           <Header style={headerStyle}>
-            <List>
+            <List style={{ display: "inline", lineHeight: 1 }}>
               <List.Item style={{ display: "inline", lineHeight: 0.1 }}>
-                <Title level={2} style={{ lineHeight: 0.2, marginTop: "5px" }}>
+                <Title level={2} style={{ lineHeight: 0.2, marginTop: "5px", fontSize:"200%" }}>
                   {songDetails.title}
                 </Title>
               </List.Item>
@@ -417,16 +418,16 @@ const Player = () => {
             <Button style={buttonStyle} onClick={showMoreDetails}>
               {moreDetails ? (
                 <>
-                  <span style={{ fontSize: "17px" }}>Less Dtails</span>
+                  <span style={{ }}>Less Dtails</span>
                   <UpOutlined
-                    style={{ fontSize: "18px", marginLeft: "10px" }}
+                    style={{ marginLeft: "10px" }}
                   />
                 </>
               ) : (
                 <>
-                  <span style={{ fontSize: "17px" }}>More Dtails</span>
+                  <span style={{ }}>More Dtails</span>
                   <DownOutlined
-                    style={{ fontSize: "17px", marginLeft: "10px" }}
+                    style={{  marginLeft: "10px" }}
                   />
                 </>
               )}
@@ -434,23 +435,23 @@ const Player = () => {
 
             {moreDetails ? (
               <List style={listContainerStyle}>
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline" ,fontSize:"80%" }}>
                   {<span>album: {songDetails.album}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
                   {<span>description: {songDetails.description}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline",fontSize:"80%" }}>
                   {<span>year: {songDetails.year}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
                   {<span>genre: {songDetails.genre}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
                   {
                     <span>
                       duration: {(songDetails.duration / 60).toFixed(2)} min.
@@ -458,7 +459,7 @@ const Player = () => {
                   }
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" }}>
+                <List.Item style={{ display: "inline" ,fontSize:"80%" }}>
                   <span>
                     comments:{" "}
                     {songDetails.comment.map((comment) => comment).join(", ")}

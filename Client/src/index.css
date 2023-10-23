@@ -1,3 +1,4 @@
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -32,3 +33,41 @@ body {
   margin-bottom: 60px;
   margin-top: 40px;
 };
+
+
+  .custom-button:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+
+  .custom-button:active {
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+
+
+
+
+
+
+  @font-face {
+    font-family: "ChilankaRegular";
+    src: local("ChilankaRegular"),
+     url("./assets/fonts/Chilanka-Regular.ttf") format("truetype");
+    font-weight: bold;
+   }
+
+   @font-face {
+    font-family: "PlaypenSansVariableFont_wght";
+    src: local("PlaypenSansVariableFont_wght"),
+     url("./assets/fonts/PlaypenSans-VariableFont_wght.ttf") format("truetype");
+    font-weight: 400;
+   }
+   @font-face {
+    font-family: "NunitoVariableFont_wght";
+    src: local("NunitoVariableFont_wght"),
+     url("./assets/fonts/Nunito-VariableFont_wght.ttf") format("truetype");
+    font-weight: 400;
+   }
+
+   

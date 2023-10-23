@@ -18,6 +18,7 @@ const Home = () => {
       style={{
         fontSize: 16,
         color: "#1677ff",
+        padding:"2px"
       }}
     />
   );
@@ -39,7 +40,7 @@ const Home = () => {
         <h2 style={{ color: "white" }}>Welcome!</h2>
 
         <Search
-          placeholder="Input search text"
+          placeholder="  Input search text"
           enterButton="Search"
           size="large"
           value={searchValue}
@@ -49,6 +50,7 @@ const Home = () => {
             setSearchValue(event.target.value);
             setStartSearch(false);
           }}
+          style={{lineHeight:2.15, padding:"2px"}}
         />
 
         {startSearch && <SongsList search={searchValue} />}

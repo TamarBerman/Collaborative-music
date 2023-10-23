@@ -1,4 +1,8 @@
-import { SearchOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from "@ant-design/icons";
 import React, { useEffect, useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
 import {
@@ -11,14 +15,17 @@ import {
   message,
   Spin,
   Skeleton,
+  Typography,
 } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 
-const baseUsersUrl = "http://localhost:3000/users";
 
-const ManageSongs = () => {
+const baseUsersUrl = "http://localhost:3000/auth";
+
+
+const ManageUsers = () => {
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const accessToken = cookies.access_token || null;
   const navigate = useNavigate();
@@ -26,7 +33,7 @@ const ManageSongs = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`${baseUsersUrl}/getUsers`, {
+      .get(`${baseUsersUrl}/getallusers`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((response) => {
@@ -38,8 +45,7 @@ const ManageSongs = () => {
         setLoading(false);
       });
   }, []);
-  const [data, setData] = useState([
-  ]);
+  const [data, setData] = useState([]);
   // CHECKBOX
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -181,12 +187,64 @@ const ManageSongs = () => {
         text
       ),
   });
+
+  //  סיסמא
+  const [passwordVisibility, setPasswordVisibility] = useState({}); // Track password visibility for each user
+  // Custom rendering function for the "Password" column
+  const renderPasswordColumn = (text, record) => {
+    const isPasswordVisible = passwordVisibility[record.userId]; // Check if the password is visible for this user
+    return (
+      <>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          {isPasswordVisible
+            ? text // Show the password
+            : // Display dots to hide the password
+              "•".repeat(text.length)}
+          <Button
+            onClick={() => togglePasswordVisibility(record.userId)}
+            icon={
+              isPasswordVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />
+            }
+            type="text"
+          />
+        </div>
+      </>
+    );
+  };
+
+  // EMAIL
+  const renderEmailColumn = (text, record) => {
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div>{text}</div>
+        <div>
+          <Typography.Paragraph
+            style={{ color: "white" }}
+            copyable={{
+              text,
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+  // Function to toggle password visibility for a specific user
+  const togglePasswordVisibility = (userId) => {
+    setPasswordVisibility((prevVisibility) => ({
+      ...prevVisibility,
+      [userId]: !prevVisibility[userId], // Toggle the visibility state for the specific user
+    }));
+  };
   //   מחיקת שורה
   const handleDelete = (userId) => {
     setDeleteLoading(true);
-    // קריאת שרת למחיקת האיבר .מחיקת ה SongID
+    // קריאת שרת למחיקת האיבר .מחיקת ה UserID
     axios
-      .delete(`${baseUsersUrl}/deleteUser/${userId}`)
+      .delete(`${baseUsersUrl}/deleteuser/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       .then((response) => {
         console.log(response.data);
         const newData = data.filter((item) => item.userId !== userId);
@@ -204,63 +262,53 @@ const ManageSongs = () => {
         setDeleteLoading(false);
       });
   };
-  //   ניווט להאזנה לשיר
-  const listenToSong = (songId) => {
-    const baseUrl = "http://localhost:3000/mp3";
+  //  פרטים נוספים
+  const moreInfo = (userId) => {
     axios
-      .get(`${baseUrl}/getSong/${songId}`, {
+      .get(`${baseUsersUrl}/getUser/${userId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((response) => {
         console.log(response.data);
-        navigate(`/music/${songId}`, { state: response.data });
-        //         // Open the page in a new tab
-        //   const newTab = window.open(`/music/${songId}`, '_blank');
-        //   if (newTab) {
-        //     // Pass data to the new tab if needed
-        //     newTab.data = response.data;
-        //   } else {
-        //     // Handle if the new tab was blocked by the browser's popup blocker
-        //     console.log('The new tab was blocked by the browser');
-        //   }
+        alert(response.data);
       })
       .catch((error) => {
         console.log(error);
         if (error.response.status === 404) {
-          message.warning("השיר כבר לא קיים..");
+          message.warning("משתמש כבר לא קיים..");
         } else message.error("ארעה שגיאה בצד השרת");
       });
   };
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
-      width: "20%",
-      ...getColumnSearchProps("name"),
+      dataIndex: "username",
+      key: "username",
+      width: "25%",
+      ...getColumnSearchProps("username"),
     },
     {
       title: "Password",
       dataIndex: "password",
       key: "password",
-      width: "12%",
-      //   ...getColumnSearchProps('age'),
+      width: "25%",
+      render: renderPasswordColumn, // Render the password column
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      width: "12%",
+      width: "25%",
+      ...getColumnSearchProps("email"),
+      render: renderEmailColumn, // Render the email column
     },
-    
+
     {
       title: "Action",
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <a onClick={() => listenToSong(record.songId)}>
-            Listen to {record.title}
-          </a>
+          <a onClick={() => moreInfo(record.userId)}>More Information</a>
         </Space>
       ),
       width: "15%",
@@ -269,30 +317,36 @@ const ManageSongs = () => {
       title: "operation",
       dataIndex: "operation",
       render: (_, record) =>
-        data.length >= 1 ? (
+        data.length >= 1 && record.email != "admin@gmail.com" ? (
           <Popconfirm
             loading={deleteLoading}
             title="Sure to delete?"
-            onConfirm={() => handleDelete(record.songId)}
+            onConfirm={() => handleDelete(record.userId)}
           >
             <a>Delete</a>
           </Popconfirm>
+        ) : record.email == "admin@gmail.com" ? (
+          <span style={{ fontWeight: "bold", color: "pink" }}>-admin-</span>
         ) : null,
-      width: "10%",
+      width: "15%",
     },
   ];
   return (
     <>
       {/* <Spin spinning={loading} tip="Loading" size="large"> */}
       {loading ? (
-    <Skeleton  active paragraph={{ rows: 17 , width: ['100%'] }}title={{ width: '100%' }} />
-  ) : (
-    <Table
-      rowSelection={rowSelection}
-      columns={columns}
-      dataSource={data}
-    />
-  )}
+        <Skeleton
+          active
+          paragraph={{ rows: 17, width: ["100%"] }}
+          title={{ width: "100%" }}
+        />
+      ) : (
+        <Table
+          rowSelection={rowSelection}
+          columns={columns}
+          dataSource={data}
+        />
+      )}
       {/* </Spin> */}
       <div
         style={{
@@ -318,4 +372,4 @@ const ManageSongs = () => {
     </>
   );
 };
-export default ManageSongs;
+export default ManageUsers;

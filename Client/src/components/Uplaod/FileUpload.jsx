@@ -1,5 +1,5 @@
 import axios from "axios";
-import { InboxOutlined } from "@ant-design/icons";
+import { InboxOutlined, LoadingOutlined } from "@ant-design/icons";
 import {
   Button,
   Form,
@@ -11,8 +11,8 @@ import {
   Alert,
   Spin,
   Divider,
+  Select,
 } from "antd";
-
 
 import ImgCrop from "antd-img-crop";
 import { React, useState } from "react";
@@ -33,6 +33,7 @@ const FileUpload = () => {
   const [description, setDescription] = useState("");
   const [permission, setPermission] = useState(false);
   const [singername, setSingername] = useState("");
+  const [category, setCategory] = useState(["other" ]);
   const [errorMessage, setErrorMessage] = useState("");
   const [form] = useForm();
   const [loading, setLoading] = useState(false);
@@ -112,6 +113,7 @@ const FileUpload = () => {
 
   const handleFileUpload = async (file, image) => {
     setLoading(true);
+
     if (!file) {
       // Handle case when no file is selected
       message.error("Please select a song to upload.");
@@ -122,7 +124,7 @@ const FileUpload = () => {
     }
 
     const formData = new FormData();
-    
+
     formData.append("file", file);
     formData.append("image", image);
     formData.append("song_details[rate]", rate);
@@ -130,6 +132,12 @@ const FileUpload = () => {
     formData.append("song_details[permission]", permission);
     formData.append("song_details[description]", description);
     formData.append("song_details[singer]", singername);
+
+    let i=0;
+    category.forEach(category=>{
+      formData.append(`song_details[category][${i++}]`, category);
+    })
+
 
     const values = form.getFieldsValue();
     const accessToken = cookies.access_token || "aaa";
@@ -146,12 +154,17 @@ const FileUpload = () => {
       .then((response) => {
         console.log(response);
         resetFormFunction();
-        message.success("File uploaded successfully!"); // Display success message
+        message.success("File uploaded successfully!");
       })
       .catch((error) => {
         if (error.response && error.response.data) {
-          message.error("unAuthorized. Navigate to login");
+          console.log(error.response);
+          if (error.response.status === 409) {
+            message.error(error.response.data.message);
+            resetFormFunction();
+          }
           if (error.response.status === 401) {
+            message.error("unAuthorized. Navigate to login");
             navigate("/login", { state: values });
           }
         } else {
@@ -219,6 +232,7 @@ const FileUpload = () => {
     setRate(0.2);
     setSingername();
     setSongname();
+    setCategory([]);
     setFileList([]);
     form.resetFields();
   };
@@ -230,6 +244,33 @@ const FileUpload = () => {
     marginBottom: "60px",
     marginTop: "40px",
   };
+
+  const loadingIcon = (
+    <LoadingOutlined
+      style={{
+        fontSize: 30,
+      }}
+      spin
+    />
+  );
+
+  // multiple category select
+  const options = [
+    { label: "חתונה", value: "wedding" },
+    { label: "שקט", value: "quiet" },
+    { label: "סוער", value: "stormy" },
+    { label: "חגים", value: "Holiday" },
+    { label: "שמחה", value: "happy" },
+    { label: "רגוע", value: "calm" },
+    { label: "דיגיי", value: "dj" },
+    { label: "אחר", value: "other" },
+  ];
+  const handleChangeCategory = (value) => {
+    console.log(value)
+    setCategory(value)
+    console.log(`selected ${value}`);
+  };
+
   return (
     <>
       <br></br>
@@ -247,7 +288,13 @@ const FileUpload = () => {
           <Alert message="Error" type="error" showIcon closable />
         )}
       </div>
-      <Spin spinning={loading} tip="Loading" size="large">
+      {/* <Spin spinning={loading} tip="Loading" size="large"> */}
+      <Spin
+        indicator={loadingIcon}
+        spinning={loading}
+        tip="Uploading song | Please wait."
+        size="large"
+      >
         <Form
           name="upload_form"
           form={form}
@@ -341,6 +388,21 @@ const FileUpload = () => {
               onChange={(e) => setDescription(e.target.value)}
             />
           </Form.Item>
+
+          <Form.Item name="catogory" label="Select catrgory">
+            <Select
+              mode="multiple"
+              allowClear
+              style={{
+                width: "100%",
+              }}
+              placeholder="Please select"
+              defaultValue={category}
+              onChange={handleChangeCategory}
+              options={options}
+              value={category}
+            />
+          </Form.Item>
           <Form.Item name="permission" label="choose permission">
             <Radio.Group>
               <Radio
@@ -374,6 +436,13 @@ const FileUpload = () => {
               {fileList.length < 5 && "+ Upload"}
             </Upload>
           </ImgCrop>
+          <span style={{ fontSize: 13, color: "red" }}>
+            העלאת תמונה הינה חובה.
+          </span>
+          <span>{"  "}</span>
+          <span style={{ fontSize: 13, color: "red" }}>
+            תמונה זו תוצג במקרה שלא קיימת תמונת ברירת מחדל לשיר
+          </span>
 
           <Form.Item
             wrapperCol={{
@@ -381,7 +450,7 @@ const FileUpload = () => {
               offset: 6,
             }}
           >
-            <Space>
+            <Space style={{ marginBottom: 20 }}>
               <Button type="primary" htmlType="submit">
                 Submit
               </Button>
@@ -392,6 +461,7 @@ const FileUpload = () => {
           </Form.Item>
         </Form>
       </Spin>
+      {/* </Spin> */}
     </>
   );
 };

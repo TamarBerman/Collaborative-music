@@ -2,7 +2,9 @@
   /* max-width: 1280px; */
   /*  */
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 2rem 0rem 2rem ;
+  /* padding: 2rem 0rem 0rem 0rem; */
+
   text-align: center;
   font-family: Tahoma;
   background-color: black;
@@ -59,12 +61,30 @@ body {
   min-height: 100vh;
 }
 
-.customDividerStyle  {
+.customDividerStyle {
   height: 10px;
   border: none;
   font-size: 24px;
   margin-bottom: 60px;
   margin-top: 40px;
-};
+}
 
 
+
+.custom-button:hover {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+.custom-button:active {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+
+
+
+
+
+
+  

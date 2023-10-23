@@ -11,11 +11,15 @@ import {
   message,
   Spin,
   Skeleton,
+  Drawer,
+  Image,
+  FloatButton,
 } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
-import "./ManageSongs.css"
+import AudioPlayer from "react-h5-audio-player";
+import AdminLoginModal from "./AdminLoginModal";
 
 const baseSongsUrl = "http://localhost:3000/mp3";
 
@@ -195,7 +199,11 @@ const ManageSongs = () => {
     setDeleteLoading(true);
     // קריאת שרת למחיקת האיבר .מחיקת ה SongID
     axios
-      .delete(`${baseSongsUrl}/deleteSong/${songId}`)
+      .delete(`${baseSongsUrl}/deleteSong/${songId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       .then((response) => {
         console.log(response.data);
         const newData = data.filter((item) => item.songId !== songId);
@@ -213,7 +221,9 @@ const ManageSongs = () => {
         setDeleteLoading(false);
       });
   };
-  //   ניווט להאזנה לשיר
+  //    האזנה לשיר
+  const audioPlayerRef = useRef(null);
+  const [songDetails, setSongDetails] = useState({});
   const listenToSong = (songId) => {
     const baseUrl = "http://localhost:3000/mp3";
     axios
@@ -222,16 +232,25 @@ const ManageSongs = () => {
       })
       .then((response) => {
         console.log(response.data);
-        navigate(`/music/${songId}`, { state: response.data });
-        //         // Open the page in a new tab
-        //   const newTab = window.open(`/music/${songId}`, '_blank');
-        //   if (newTab) {
-        //     // Pass data to the new tab if needed
-        //     newTab.data = response.data;
-        //   } else {
-        //     // Handle if the new tab was blocked by the browser's popup blocker
-        //     console.log('The new tab was blocked by the browser');
-        //   }
+        const song = response.data;
+        setSongDetails({
+          song_name: song.song_name,
+          song_description: song.song_description,
+          song_rate: song.rate,
+          audio_url: song.audioUrl,
+          image_url: song.imageUrl,
+          song_id: song.id,
+          like: response.data.likeCount || 0,
+          artists: song.artists,
+          album: song.album,
+          duration: song.duration,
+          title: song.title,
+          genre: song.genre,
+          comment: song.comment,
+          year: song.year,
+          description: song.description,
+        });
+        showDefaultDrawer();
       })
       .catch((error) => {
         console.log(error);
@@ -240,6 +259,26 @@ const ManageSongs = () => {
         } else message.error("ארעה שגיאה בצד השרת");
       });
   };
+
+  // האזנה לשיר
+  const [open, setOpen] = useState(false);
+  const [size, setSize] = useState();
+  const showDefaultDrawer = () => {
+    setSize("default");
+    setOpen(true);
+  };
+  const showLargeDrawer = () => {
+    setSize("large");
+    setOpen(true);
+  };
+  const onClose = () => {
+    setOpen(false);
+    // Pause the audio playback using the ref
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.audio.current.pause();
+    }
+  };
+  // עמודות בטבלה
   const columns = [
     {
       title: "Song name",
@@ -253,7 +292,6 @@ const ManageSongs = () => {
       dataIndex: "artists",
       key: "artists",
       width: "12%",
-      //   ...getColumnSearchProps('age'),
     },
     {
       title: "Album",
@@ -330,39 +368,107 @@ const ManageSongs = () => {
   ];
   return (
     <>
-      {/* <Spin spinning={loading} tip="Loading" size="large"> */}
-      {loading ? (
-    <Skeleton  active paragraph={{ rows: 17 , width: ['100%'] }}title={{ width: '100%' }} />
-  ) : (
-    <Table
-      rowSelection={rowSelection}
-      columns={columns}
-      dataSource={data}
-    />
-  )}
-      {/* </Spin> */}
       <div
         style={{
-          marginBottom: 16,
+          height: "280vh",
+          padding: 10,
         }}
       >
-        <Button
-          type="primary"
-          onClick={deleteSelectedSongs}
-          disabled={!hasSelected}
-          loading={deleteLoading}
-        >
-          Delete
-        </Button>
-        <span
+        {loading ? (
+          <Skeleton
+            active
+            paragraph={{ rows: 17, width: ["100%"] }}
+            title={{ width: "100%" }}
+          />
+        ) : (
+          <Table
+            rowSelection={rowSelection}
+            columns={columns}
+            dataSource={data}
+            pagination={{
+              pageSize: 25, // Set the page size to 20
+            }}
+          />
+        )}
+        <div
           style={{
-            marginLeft: 8,
+            marginBottom: 16,
           }}
         >
-          {hasSelected ? `Selected ${selectedRowKeys.length} items` : ""}
-        </span>
+          <Button
+            type="primary"
+            onClick={deleteSelectedSongs}
+            disabled={!hasSelected}
+            loading={deleteLoading}
+          >
+            Delete
+          </Button>
+          <span
+            style={{
+              marginLeft: 8,
+            }}
+          >
+            {hasSelected ? `Selected ${selectedRowKeys.length} items` : ""}
+          </span>
+        </div>
+        {/* חלונית צדדית להאזה לשיר */}
+
+        <Drawer
+          title={`Play Song`}
+          placement="right"
+          size={size}
+          onClose={onClose}
+          open={open}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+            }}
+          >
+            <p>{songDetails.title}</p>
+            {/* <PlaySong songDetails={songDetails}/> */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <Image
+                style={{
+                  width: "300px",
+                  margin: "auto",
+                }}
+                src={songDetails.image_url}
+                preview={{
+                  src: songDetails.image_url,
+                }}
+              />
+            </div>
+
+            <AudioPlayer
+              ref={audioPlayerRef}
+              src={songDetails.audio_url}
+              autoPlay
+              controls
+              volume={0.6}
+              loop={false}
+            />
+          </div>
+        </Drawer>
+        <FloatButton.BackTop />
       </div>
     </>
   );
 };
 export default ManageSongs;
+
+// navigate(`/music/${songId}`, { state: response.data });
+
+//         // Open the page in a new tab
+//   const newTab = window.open(`/music/${songId}`, '_blank');
+//   if (newTab) {
+//     // Pass data to the new tab if needed
+//     newTab.data = response.data;
+//   } else {
+//     // Handle if the new tab was blocked by the browser's popup blocker
+//     console.log('The new tab was blocked by the browser');
+//   }
