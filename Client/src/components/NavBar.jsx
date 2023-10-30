@@ -1,4 +1,3 @@
-// Components/NavBar.js
 import { Link } from "react-router-dom";
 import {
   TeamOutlined,
@@ -16,16 +15,77 @@ import { Menu, Affix, Button, Avatar, Dropdown, message } from "antd";
 import { useCookies } from "react-cookie";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import React from "react";
+import { userContext } from "../contexts/userContext";
+import axios from "axios";
+const baseURL = "http://localhost:3000";
+import { playlistsContext } from "../contexts/playlistsContext";
 
-const NavBar = ({userName, children }) => {
+const NavBar = ({ children }) => {
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const [current, setCurrent] = useState("mail");
   const isLoggedIn = !!cookies.access_token; // Check if access_token exists
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState("Guest");
+
+  const [userPlaylist, setUserPlaylist] = useState([]);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
 
   useEffect(() => {
-    console.log(cookies.access_token);
+    console.log("i am in navbar!!!!!!!!!!");
+    //
+    axios
+      .get(`${baseURL}/auth/getuser`, {
+        headers: {
+          Authorization: `Bearer ${cookies.access_token}`,
+        },
+      })
+      .then((response) => {
+        setCurrentUser(response.data.name);
+      })
+      .catch((error) => {
+        setCurrentUser("Guest");
+      });
   }, []);
+
+  useEffect(() => {
+    axios
+      .get(`${baseURL}/mp3/getUserPlaylists`, {
+        headers: {
+          Authorization: `Bearer ${cookies.access_token}`,
+        },
+      })
+      .then((response) => {
+        // הוספת שם הרשימה לתפריט
+        const userPlaylistItem = [];
+        let i = 0;
+        response.data.forEach((item) => {
+          userPlaylistItem.push(getItem(++i, item));
+        });
+        userPlaylistItem.push(
+          getItem(++i, { playlistId: 0, name: "New Playlist" })
+        );
+        setUserPlaylist(userPlaylistItem);
+        setNewPlaylistName(`playList_${userPlaylistItem.length}`);
+      })
+      .catch((error) => {
+        if (error.response?.status === 401) {
+          removeCookie("access_token");
+        }
+      });
+
+    // PlayList menu
+    // // יוצר אובייקטים להוספת רשימת הפלייליסטים לתפריט
+    const getItem = (key, { playlistId, name }) => {
+      const label = name;
+      return {
+        key,
+        playlistId,
+        label,
+      };
+    };
+  }, [userPlaylist, setUserPlaylist, cookies.access_token, removeCookie]);
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -150,7 +210,7 @@ const NavBar = ({userName, children }) => {
               fontSize: "20px",
             }}
           >
-            <Link to= "/login">
+            <Link to="/login">
               <Button
                 type="text"
                 style={{
@@ -193,6 +253,7 @@ const NavBar = ({userName, children }) => {
             key="user-menu"
             style={{ marginLeft: "0.5rem", fontSize: "20px" }}
           >
+            <span>{currentUser}</span>
             {/* <p>Hi {userName}</p> */}
             <Dropdown overlay={userMenu} trigger={["hover"]}>
               <Button
@@ -213,9 +274,7 @@ const NavBar = ({userName, children }) => {
                           fontSize: "20px",
                         }}
                       />
-                      
                     }
-                  
                   />
                 }
                 style={{
@@ -228,7 +287,13 @@ const NavBar = ({userName, children }) => {
           </Menu.Item>
         </Menu>
       </Affix>
-      {children}
+      {/* contexts */}
+
+      <userContext.Provider value={{ currentUser, setCurrentUser }}>
+        <playlistsContext.Provider value={{userPlaylist, setUserPlaylist,newPlaylistName, setNewPlaylistName }}>
+        {children}
+        </playlistsContext.Provider>
+      </userContext.Provider>
     </>
   );
 };

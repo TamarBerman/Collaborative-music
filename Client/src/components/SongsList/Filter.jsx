@@ -67,7 +67,7 @@ const Filter = (props) => {
         initialValues={{ dateRange: [null, null] }}
       >
         <Row gutter={[8, 8]} align="middle">
-          <Col xs={24} sm={12} md={24} align="left">
+          <Col span={4} xs={24} sm={12} md={24} align="left">
             <Form.Item>
               <Button style={buttonStyle} onClick={handleToggleInputs}>
                 {/* {showMoreInputs ? <DownOutlined /> : <UpOutlined />} */}
@@ -87,19 +87,19 @@ const Filter = (props) => {
           </Col>
           {showMoreInputs && (
             <>
-              <Col xs={24} sm={12} md={7}>
+              <Col span={10} xs={24} sm={12} md={7}>
                 <Form.Item name="dateRange">
-                  <RangePicker picker="year" />
+                  <RangePicker picker="year" placeholder={["Begin year", "End year"]} />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12} md={8}>
+              {/* <Col xs={24} sm={12} md={8}>
                 <Form.Item name="checkbox">
                   <CheckboxGroup
                     options={["1⭐", "2⭐", "3⭐", "4⭐", "5⭐"]}
                   />
                 </Form.Item>
-              </Col>
-              <Col xs={24} sm={12} md={8}>
+              </Col> */}
+              <Col  span={10} xs={24} sm={12} md={8}>
                 <Form.Item name="categorySelect">
                   <Select
                     mode="multiple"
@@ -108,14 +108,13 @@ const Filter = (props) => {
                       width: "100%",
                     }}
                     placeholder="Please select"
-                    defaultValue={["other"]}
+                    // defaultValue={["other"]}
                     onChange={handleChangeCategory}
                     options={options}
-                    // value={category}
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12} md={3}>
+              <Col span={4} xs={24} sm={12} md={3}>
                 <Form.Item name="button">
                   <Button type="primary" onClick={handleSubmit}>
                     Filter

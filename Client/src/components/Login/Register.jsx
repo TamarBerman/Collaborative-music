@@ -13,7 +13,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import ReCAPTCHA from "react-google-recaptcha";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { userContext } from "../../contexts/userContext";
+const baseURL = "http://localhost:3000";
 
 const formItemLayout = {
   labelCol: {
@@ -35,9 +37,10 @@ const Register = () => {
   const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const baseURL = "http://localhost:3000";
-
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // שימוש בקונטקסט
+  const { setCurrentUser } = useContext(userContext);
 
   useEffect(() => {
     const handleResize = () => {
@@ -68,6 +71,7 @@ const Register = () => {
           setCookie("id", response.data.id, { path: "/" });
         }
         message.success("welcome " + values.name);
+        setCurrentUser(values.name);
         navigate("/home");
       })
       .catch((error) => {

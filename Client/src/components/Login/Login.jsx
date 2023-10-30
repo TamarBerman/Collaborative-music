@@ -7,6 +7,7 @@ import {
   message,
   Divider,
 } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -14,6 +15,8 @@ import { useCookies } from "react-cookie";
 import "../../index.css";
 import "../../antd-custom.css"; // Import your custom styles
 import NavBar from "../NavBar";
+import React, { useContext } from "react";
+import { userContext } from "../../contexts/userContext";
 
 export default function Login() {
   const [cookies, setCookie] = useCookies(["access_token", "id"]);
@@ -21,8 +24,11 @@ export default function Login() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
   const { state } = useLocation();
-
   const baseURL = "http://localhost:3000";
+
+  // שימוש בקונטקסט
+  const { setCurrentUser } = useContext(userContext);
+
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -53,6 +59,8 @@ export default function Login() {
           setCookie("id", response.data.id, { path: "/" });
         }
         message.success(response.data.user.name + " Logged in successfully");
+        // עדכון קונטקסט
+        setCurrentUser(response.data.user.name);
         // if (state == null) navigate("/home");
         navigate(-1);
       })

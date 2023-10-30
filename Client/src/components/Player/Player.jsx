@@ -1,12 +1,3 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import { Typography, message } from "antd";
-import "./Player.css";
-import AudioPlayer from "react-h5-audio-player";
-import "react-h5-audio-player/lib/styles.css";
-import { useLocation, useNavigate } from "react-router-dom";
-const baseUrl = "http://localhost:3000/mp3";
-const reportsURL = "http://localhost:3000/abuse-reports";
 // npm install react-h5-audio-player
 import {
   LikeOutlined,
@@ -19,11 +10,20 @@ import {
   DownloadOutlined,
   DownOutlined,
   UpOutlined,
-  // StarHalfOutlined,
 } from "@ant-design/icons";
-import { List, Space, Button, Tooltip, Image, Layout } from "antd";
+import { List, Button, Tooltip, Image, Layout, Menu, Modal } from "antd";
 import axios from "axios";
 import { useCookies } from "react-cookie";
+import { React, useEffect, useState, useContext } from "react";
+import { Typography, message } from "antd";
+import "./Player.css";
+import AudioPlayer from "react-h5-audio-player";
+import "react-h5-audio-player/lib/styles.css";
+import { useLocation, useNavigate } from "react-router-dom";
+import { playlistsContext } from "../../contexts/playlistsContext";
+
+const baseUrl = "http://localhost:3000/mp3";
+const reportsURL = "http://localhost:3000/abuse-reports";
 
 // rate
 const generateStarArray = (rate) => {
@@ -58,6 +58,10 @@ const StarIcon = ({ type }) => {
 };
 
 const Player = () => {
+  // שימוש בקונטקסט
+  const { userPlaylist, setUserPlaylist, newPlaylistName, setNewPlaylistName } =
+    useContext(playlistsContext);
+  const [myNewPlaylistName, setMyNewPlaylistName] = useState(newPlaylistName);
   const { Title } = Typography;
   const { Text } = Typography;
   const { Header, Footer, Sider, Content } = Layout;
@@ -65,6 +69,9 @@ const Player = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const [addedToPlaylist, setAddedToPlaylist] = useState(false);
+  const [existsPlaylist, setExistsPlaylist] = useState(null);
+  const [showPlaylists, setShowPlaylists] = useState(false);
+
   const [songDetails, setSongDetails] = useState({
     song_name: "",
     song_description: "",
@@ -100,6 +107,7 @@ const Player = () => {
     // Make an API request to fetch the like count for the current song
     fetchLikeCount();
   }, []);
+
   // check Song Exists in the playlist (+/-) called in useWffect
   const checkSongExists = () => {
     // קריאת שרת לבדוק האם השיר רשום בפלייליסט ולעדכן את הכפתור
@@ -108,7 +116,9 @@ const Player = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((response) => {
-        setAddedToPlaylist(response.data);
+        // אם השיר קיים בפלייליסט- אחרת +י
+        setAddedToPlaylist(response.data ? true : false);
+        setExistsPlaylist(response.data || null);
       })
       .catch((error) => {
         handlePlaylistError(error, "connect");
@@ -123,7 +133,6 @@ const Player = () => {
     axios
       .get(`${baseUrl}/getLikeCount/${state.id}`)
       .then((response) => {
-        console.log(response);
         setSongDetails({
           song_name: state.song_name,
           song_description: state.song_description,
@@ -139,9 +148,8 @@ const Player = () => {
           genre: state.genre,
           comment: state.comment,
           year: state.year,
-          description:state.description,
+          description: state.description,
         });
-        console.log(state);
       })
       .catch((error) => {
         console.log("Failed to fetch like count:", error);
@@ -160,14 +168,13 @@ const Player = () => {
           genre: state.genre,
           comment: state.comment,
           year: state.year,
-          description:state.description,
+          description: state.description,
         });
       });
   };
 
   // handle errors with playlist
   const handlePlaylistError = (error, action) => {
-    console.log(action);
     if (error.response.status === 401 && action != "connect") {
       if (!accessToken) message.warning("You need to first Login");
       else {
@@ -181,45 +188,58 @@ const Player = () => {
       if (action != "connect") message.error(`Error ${action}ing to playlist`);
     }
   };
-
   // add a song to user's playlist
-  const addToPlayList = () => {
+  const addToPlayList = (playlistId) => {
     axios
       .put(
         `${baseUrl}/addToPlaylist`,
-        { songId: songDetails.song_id },
+        { songId: songDetails.song_id, playlistId: playlistId },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       )
       .then((response) => {
-        console.log("response", response);
+        console.log(response);
+        setAddedToPlaylist(true);
+        setExistsPlaylist({
+          playlistId: response.data._id,
+          name: response.data.name,
+        });
         if (response.data.status == 409)
           message.warning("Song already exists in the playlist");
         else if (response.data.status == 404) message.warning("User not found");
         else {
           message.success(
-            "This song had been addded successfully to your own playlist"
+            <>
+              <span>This song had been addded successfully to </span>
+              <span style={{ color: "green" }}>{response.data.name}</span>
+            </>
           );
           setAddedToPlaylist(true);
         }
       })
       .catch((error) => {
         handlePlaylistError(error, "add");
-      });
+      })
+      .finally(() => {});
   };
   // remove from playlist
   const removeFromPlayList = () => {
     axios
       .put(
         `${baseUrl}/removeFromPlaylist`,
-        { songId: songDetails.song_id },
+        { songId: songDetails.song_id, playlistId: existsPlaylist?.playlistId },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       )
-      .then(() => {
-        message.success("This song has been removed from your playlist");
+      .then((response) => {
+        message.success(
+          <>
+            <span>This song had been removed successfully from </span>
+            <span style={{ color: "green" }}>{response.data.name}</span>
+          </>
+        );
         setAddedToPlaylist(false);
       })
       .catch((error) => {
@@ -280,7 +300,6 @@ const Player = () => {
         }
       )
       .then((response) => {
-        console.log(response.data);
         message.success(
           <div>
             תודה על תגובתך
@@ -304,6 +323,73 @@ const Player = () => {
     if (moreDetails) setMoreDetails(false);
     else setMoreDetails(true);
   };
+
+  // MODAL ליצירת פלייליסט
+  const [open, setOpen] = useState(false);
+  const showModal = () => {
+    setOpen(true);
+  };
+  const hideModal = () => {
+    setNewPlaylistName(`playList_${userPlaylist.length}`);
+    setMyNewPlaylistName(`playList_${userPlaylist.length}`);
+    setOpen(false);
+  };
+  // לחיצה על הוספה לפליליסט
+  const handleAddToPlaylistClick = (e) => {
+    const clickedPlaylist = userPlaylist.find((item) => {
+      return item.key == e.key;
+    });
+    if (clickedPlaylist) {
+      // אם מה שנלחץ זה כפתור הוספת פלייליסט
+      if (clickedPlaylist.playlistId == 0) {
+        alert("add new playList");
+        // פתיחת טופס שיכניס שם של פלייליסט
+        showModal();
+      } else {
+        console.log("In ELSE - PLAYLIST ADD");
+        addToPlayList(clickedPlaylist.playlistId);
+      }
+      setShowPlaylists(false);
+    }
+  };
+  // יצירת פלייליסט
+  const createPlaylist = () => {
+    axios
+      .post(
+        `${baseUrl}/createPlaylist`,
+        { newPlaylistName: myNewPlaylistName },
+        {
+          headers: {
+            Authorization: `Bearer ${cookies.access_token}`,
+          },
+        }
+      )
+      .then((response) => {
+        // כאן נקבל חזרה אוביקט של
+        // ונציב ב userPlaylist
+        let updatedUserPlaylist = userPlaylist.slice(0, -1);
+        console.log(response);
+        // Add the response data to the copied userPlaylist
+        updatedUserPlaylist.push({
+          key: userPlaylist.length + 1, // Adjust the key accordingly
+          playlistId: response.data._id,
+          label: response.data.name,
+        });
+        // Re-add the last item
+        updatedUserPlaylist.push(userPlaylist[userPlaylist.length - 1]);
+        // Update userPlaylist with the modified array
+        setUserPlaylist(updatedUserPlaylist);
+        addToPlayList(response.data._id);
+        hideModal();
+      })
+      .catch((error) => {
+        if (error.response.status == 400)
+          message.info("קיים פלייליסט עם שם זהה");
+        else message.info("ארעה שגיאה במהלך יציאת הפלייליסט");
+        showModal();
+      })
+      .finally(() => {});
+  };
   const starArray = generateStarArray(songDetails.song_rate);
 
   const headerStyle = {
@@ -311,7 +397,6 @@ const Player = () => {
     height: 100,
     paddingInline: 50,
     backgroundColor: "black",
-    
   };
   const contentStyle = {
     textAlign: "left",
@@ -389,7 +474,14 @@ const Player = () => {
           <Header style={headerStyle}>
             <List style={{ display: "inline", lineHeight: 1 }}>
               <List.Item style={{ display: "inline", lineHeight: 0.1 }}>
-                <Title level={2} style={{ lineHeight: 0.2, marginTop: "5px", fontSize:"200%" }}>
+                <Title
+                  level={2}
+                  style={{
+                    lineHeight: 0.2,
+                    marginTop: "5px",
+                    fontSize: "200%",
+                  }}
+                >
                   {songDetails.title}
                 </Title>
               </List.Item>
@@ -418,40 +510,36 @@ const Player = () => {
             <Button style={buttonStyle} onClick={showMoreDetails}>
               {moreDetails ? (
                 <>
-                  <span style={{ }}>Less Dtails</span>
-                  <UpOutlined
-                    style={{ marginLeft: "10px" }}
-                  />
+                  <span style={{}}>Less Dtails</span>
+                  <UpOutlined style={{ marginLeft: "10px" }} />
                 </>
               ) : (
                 <>
-                  <span style={{ }}>More Dtails</span>
-                  <DownOutlined
-                    style={{  marginLeft: "10px" }}
-                  />
+                  <span style={{}}>More Dtails</span>
+                  <DownOutlined style={{ marginLeft: "10px" }} />
                 </>
               )}
             </Button>
 
             {moreDetails ? (
               <List style={listContainerStyle}>
-                <List.Item style={{ display: "inline" ,fontSize:"80%" }}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   {<span>album: {songDetails.album}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   {<span>description: {songDetails.description}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline",fontSize:"80%" }}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   {<span>year: {songDetails.year}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   {<span>genre: {songDetails.genre}</span>}
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" ,fontSize:"80%"}}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   {
                     <span>
                       duration: {(songDetails.duration / 60).toFixed(2)} min.
@@ -459,7 +547,7 @@ const Player = () => {
                   }
                 </List.Item>
                 <br />
-                <List.Item style={{ display: "inline" ,fontSize:"80%" }}>
+                <List.Item style={{ display: "inline", fontSize: "80%" }}>
                   <span>
                     comments:{" "}
                     {songDetails.comment.map((comment) => comment).join(", ")}
@@ -523,7 +611,25 @@ const Player = () => {
               </List.Item>
               <List.Item style={{ display: "inline-block", margin: "0 10px" }}>
                 {!addedToPlaylist && (
-                  <Tooltip title="Add to Playlist">
+                  <Tooltip
+                    title={
+                      <>
+                        {showPlaylists && (
+                          <>
+                            <Menu
+                              mode="inline"
+                              theme="dark"
+                              items={userPlaylist}
+                              onClick={handleAddToPlaylistClick}
+                            />
+                          </>
+                        )}
+                        {!showPlaylists && (
+                          <span>Click to add to Playlist</span>
+                        )}
+                      </>
+                    }
+                  >
                     <Button
                       type="primary"
                       shape="round"
@@ -535,7 +641,9 @@ const Player = () => {
                           }}
                         />
                       }
-                      onClick={addToPlayList}
+                      onClick={() => {
+                        setShowPlaylists(!showPlaylists);
+                      }}
                       size={"large"}
                       style={{
                         backgroundColor: "black",
@@ -547,7 +655,16 @@ const Player = () => {
                 )}
 
                 {addedToPlaylist && (
-                  <Tooltip title="Remove from PlayList">
+                  <Tooltip
+                    title={
+                      <>
+                        <span>Remove from: </span>
+                        <span style={{ color: "tan" }}>
+                          {existsPlaylist?.name}
+                        </span>
+                      </>
+                    }
+                  >
                     <Button
                       type="primary"
                       shape="round"
@@ -636,31 +753,24 @@ const Player = () => {
           loop={false}
         />
       </div>
+      {/* מודל הוספת פלייליסט */}
+      <Modal
+        title="Modal"
+        open={open}
+        onOk={createPlaylist}
+        onCancel={hideModal}
+        okText="Add"
+        cancelText="Cancle"
+      >
+        <input
+          // value={newPlaylistName}
+          value={myNewPlaylistName}
+          // onChange={(e) => setNewPlaylistName(e.target.value)}
+          onChange={(e) => setMyNewPlaylistName(e.target.value)}
+        ></input>
+      </Modal>
     </>
   );
 };
 
 export default Player;
-
-{
-  /* <List>
-<List.Item style={{ margin: "0 10px" }}>
-  {songDetails.artists[0] && (
-    <span>
-      artists: {songDetails.artists.map((artist) => artist).join(", ")}
-    </span>
-  )}
-</List.Item>
-<List.Item style={{ margin: "0 10px" }}>
-  {songDetails.comment[0] && (
-    <span>
-      comments:{" "}
-      {songDetails.comment.map((comment) => comment).join(", ")}
-    </span>
-  )}
-</List.Item>
-<List.Item style={{ margin: "0 10px" }}>
-  {<span>album: {songDetails.album}</span>}
-</List.Item>
-</List> */
-}

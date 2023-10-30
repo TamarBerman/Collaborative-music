@@ -13,8 +13,8 @@ const SongsList = (props) => {
   const baseUrl = "http://localhost:3000/mp3";
   let propVal = !props.search && !props.userId ? null : props;
   let searchValue = props.search || null;
-  let playlistNum = props.playlistNum || null;
-  let playlistSongIds = props.playlistSongIds || null;
+  let isPlaylistActive = props.isPlaylistActive || null;
+  let playlistId = props.playlistId || null;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [length, setLength] = useState(pageSize);
@@ -23,7 +23,7 @@ const SongsList = (props) => {
   const [currentPage, setCurrentPage] = useState(1); // Track the current page
   const [cookies] = useCookies(["access_token"]);
   const accessToken = cookies.access_token || null;
-  const callComponent = playlistNum ? "playlist" : "music";
+  const callComponent = isPlaylistActive ? "playlist" : "music";
 
   // השמעת שיר זמני
   const [miniAudioPlayer, setMiniAudioPlayer] = useState({
@@ -50,10 +50,10 @@ const SongsList = (props) => {
 
   // כאשר מופעל הסינון עידכון ערכי הסינון וקריאה
   useEffect(() => {
-    playlistSongIds = props.playlistSongIds || null;
+    playlistId = props.playlistId || null;
     setCurrentPage(1);
     fetchData(1, filteredData, sort);
-  }, [filteredData,sort]);
+  }, [filteredData, sort]);
 
   // כאשר מתרנדר העמוד- בדיקת אורך לעדכון pagination
   useEffect(() => {
@@ -61,26 +61,21 @@ const SongsList = (props) => {
       try {
         let response;
         // אם נשמצא ברשימת שירים
-        // if (!propVal) {
-        //   response = await axios.get(`${baseUrl}/len`);
-        // }
+        if (!propVal) {
+          return;
+          //   response = await axios.get(`${baseUrl}/len`);
+        }
         // אם נמצא בחיפוש
-        // else
-         if (propVal.search) {
+        else if (propVal.search) {
           response = await axios.get(`${baseUrl}/lensearch`, {
             params: { search: searchValue },
           });
+          setLength(response.data);
         }
         // אם נמצא ברשימת השמעה
-        else if (propVal.playlistNum) {
-          response = await axios.get(`${baseUrl}/lenplaylist`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-        }
-        console.log("len", response.data);
-        setLength(response.data);
+        // else if (propVal.playlistId != "" && propVal.playlistId != null) {
+        //   setLength(propVal.playlistLength);
+        // }
       } catch (error) {
         console.error("Error in getting length:", error);
       }
@@ -98,26 +93,41 @@ const SongsList = (props) => {
   const fetchData = async (page, filter, sort) => {
     setLoading(true);
     const startIndex = (page - 1) * pageSize; // Calculate the starting index based on the page number
-    console.log(startIndex)
+    console.log(startIndex);
     let response;
     try {
-      response = await axios.get(
-        `${baseUrl}/getsongs?limit=${pageSize}&offset=${startIndex}`,
-        {
-          params: {
-            search: (searchValue = props.search), //propVal.search?propVal.search:null,
-            filter: filter,
-            sort: sort,
-            playlistSongIds: playlistSongIds,
-          },
-        }
-      );
-      const newData = response.data.songs ;
-      console.log("RRRRRRR",response.data)
+      if (callComponent == "playlist") {
+        response = await axios.get(
+          `${baseUrl}/getPlaylist?limit=${pageSize}&offset=${startIndex}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            params: {
+              playlistId: playlistId,
+            },
+          }
+        );
+      } else {
+        response = await axios.get(
+          `${baseUrl}/getsongs?limit=${pageSize}&offset=${startIndex}`,
+          {
+            params: {
+              search: (searchValue = props.search), //propVal.search?propVal.search:null,
+              filter: filter,
+              sort: sort,
+            },
+          }
+        );
+      }
+      const newData = response.data.songs;
+      console.log("RRRRRRR", response.data);
       setData(newData);
       if (response.data.songListLength) {
-        setLength(response.data.songListLength)
+        console.log("llllll", response.data.songListLength);
+        setLength(response.data.songListLength);
       }
+      console.log(length);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -136,15 +146,20 @@ const SongsList = (props) => {
 
   return (
     <>
-      <Divider style={customDividerStyle}>Music</Divider>
-      <Row align="middle">
-        <Col span={12} align="left">
-          <Filter setFilteredData={setFilteredData} />
-        </Col>
-        <Col span={12} align="right">
-          <Sort setSort={setSort} />
-        </Col>
-      </Row>
+          <Divider style={customDividerStyle}>{callComponent}</Divider>
+
+      {!isPlaylistActive && (
+        <>
+          <Row align="middle">
+            <Col span={12} align="left">
+              <Filter setFilteredData={setFilteredData} />
+            </Col>
+            <Col span={12} align="right">
+              <Sort setSort={setSort} />
+            </Col>
+          </Row>
+        </>
+      )}
       <Spin spinning={loading} tip="Loading" size="large">
         <List
           style={{ paddingBottom: "20px" }}
