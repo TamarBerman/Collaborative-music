@@ -52,11 +52,9 @@ export class SongService {
       category: category || ['other']
     }
     const newSong = new this.songModel(uploadedSong);
-
+    //  בדיקה האם השיר קיים במאגר
     if (await this.checkIfSongExists(newSong))
       throw new ConflictException('Song exists');
-    //  בדיקה האם השיר קיים במאגר
-    // const newSong = new this.songModel(uploadedSong);
     const savedSong = await newSong.save();
     return savedSong;
     // }

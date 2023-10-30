@@ -58,7 +58,11 @@ export class AuthController {
   }
 
 
-
+  @UseGuards(AuthGuard)
+  @Get('getuser')
+  async getUser(@Request() request){
+    return await this.authService.getUser(request);
+  }
   // //////////////////////////////////////////////////////////////////
   // /////////////////////////////// Admin ////////////////////////////
   // //////////////////////////////////////////////////////////////////
@@ -75,15 +79,7 @@ export class AuthController {
     return await this.authService.deleteUser(userId);
   }
 
-  // @Public()
-  // @HttpCode(HttpStatus.OK)
-  // @Post('adminlogin')
-  // async adminLogin(@Res() res, @Body() values: any) {
-  //   console.log(values)
-  //   const token = await this.authService.adminSignIn(values.email, values.password);
-  //   console.log(token)
-  //   return token;
-  // }
+
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('adminlogin')

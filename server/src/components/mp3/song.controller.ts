@@ -7,6 +7,7 @@ import { Public } from '../auth/decorators/public.decorator';
 import { AbuseReportsService } from '../abuseReports/abuseReports.service';
 import { AuthService } from '../auth/auth.service'
 import { AdminGuard } from '../auth/admin.guard';
+import { PlaylistService } from '../playlist/playlist.service';
 
 
 @Controller('mp3')
@@ -58,17 +59,13 @@ export class SongController {
   @Public()
   @Get('getsongs')
   async search(@Query('filter') filter?: any, @Query('sort') sort?: any, @Query('search') search?: string, @Query('limit') limit?: number,
-    @Query('offset') offset?: number, @Query('playlistSongIds') playlistSongIds?: string[], @Res() res?): Promise<Song[]> {
+    @Query('offset') offset?: number, @Res() res?): Promise<Song[]> {
     try {
       console.log(`filter: ${filter}, sort: ${sort}`);
       let songs: Song[] = [];
-      let serviceResponse: any;
-      if (playlistSongIds)
-        songs = await this.songService.getSongsByIds(limit, offset, playlistSongIds);
-      else {
-        serviceResponse = await this.songService.getSongs(search, limit, offset, filter, sort);
-        songs = serviceResponse.songs || serviceResponse;
-      }
+      let serviceResponse: any = {};
+      serviceResponse = await this.songService.getSongs(search, limit, offset, filter, sort);
+      songs = serviceResponse.songs || serviceResponse;
 
       const songObjs: any[] = [];
       songs.forEach(song => {
