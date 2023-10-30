@@ -251,7 +251,6 @@ const ManageUsers = () => {
         setData(newData);
       })
       .catch((error) => {
-        alert("catch");
         console.log("in catch");
         console.log(error);
         if (error.status === 404) {
@@ -270,7 +269,6 @@ const ManageUsers = () => {
       })
       .then((response) => {
         console.log(response.data);
-        alert(response.data);
       })
       .catch((error) => {
         console.log(error);

@@ -210,7 +210,6 @@ const ManageSongs = () => {
         setData(newData);
       })
       .catch((error) => {
-        alert("catch");
         console.log("in catch");
         console.log(error);
         if (error.status === 404) {

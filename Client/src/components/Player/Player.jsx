@@ -342,7 +342,6 @@ const Player = () => {
     if (clickedPlaylist) {
       // אם מה שנלחץ זה כפתור הוספת פלייליסט
       if (clickedPlaylist.playlistId == 0) {
-        alert("add new playList");
         // פתיחת טופס שיכניס שם של פלייליסט
         showModal();
       } else {

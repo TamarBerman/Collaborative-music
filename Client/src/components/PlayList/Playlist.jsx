@@ -110,31 +110,33 @@ const Playlist = () => {
       setPlaylistId(clickedPlaylist.playlistId);
       // אם מה שנלחץ זה כפתור הוספת פלייליסט
       if (clickedPlaylist.playlistId == 0) {
-        alert("add new playList");
         setShowPlaylist(false);
         // פתיחת טופס שיכניס שם של פלייליסט
         showModal();
       } else {
-        // הצגת הפלייליסט שנלחץ
-        setShowPlaylist(false);
-        // כאן קריאת שרת לקבלת אורך רשימת השירים!
-        // לשלוח רשימת השמעה
-        axios
-          .get(`${baseURL}/getPlaylistLength`, {
-            headers: {
-              Authorization: `Bearer ${cookies.access_token}`,
-            },
-            params: { playlistId: clickedPlaylist.playlistId },
-          })
-          .then((response) => {
-            setPlaylistLength(response.data);
-          })
-          .catch((error) => {
-            console.log(error);
-          })
-          .finally(() => {
-            setShowPlaylist(true);
-          });
+        // Check if the playlist length is already available in the state
+        if (clickedPlaylist.playlistId !== playlistId) {
+          // הצגת הפלייליסט שנלחץ
+          setShowPlaylist(false);
+          // כאן קריאת שרת לקבלת אורך רשימת השירים!
+          // לשלוח רשימת השמעה
+          axios
+            .get(`${baseURL}/getPlaylistLength`, {
+              headers: {
+                Authorization: `Bearer ${cookies.access_token}`,
+              },
+              params: { playlistId: clickedPlaylist.playlistId },
+            })
+            .then((response) => {
+              setPlaylistLength(response.data);
+            })
+            .catch((error) => {
+              console.log(error);
+            })
+            .finally(() => {
+              setShowPlaylist(true);
+            });
+        }
       }
     }
   };
@@ -164,7 +166,7 @@ const Playlist = () => {
   };
   // Function to edit the playlist name
   const handleEditPlaylistName = (playlistId, currentName) => {
-    console.log("in handleEditPlaylistName")
+    console.log("in handleEditPlaylistName");
     const updatedName = prompt(
       "Enter the new name for the playlist:",
       currentName
@@ -173,7 +175,7 @@ const Playlist = () => {
       axios
         .put(
           `${baseURL}/updatePlaylistName/${playlistId}`,
-          { newName:updatedName },
+          { newName: updatedName },
           {
             headers: {
               Authorization: `Bearer ${cookies.access_token}`,
@@ -270,8 +272,6 @@ const Playlist = () => {
                       )}
                     </Button>
                     <Menu
-                      // defaultSelectedKeys={["1"]}
-                      // defaultOpenKeys={["sub1"]}
                       mode="inline"
                       theme="dark"
                       inlineCollapsed={collapsed}
@@ -279,25 +279,52 @@ const Playlist = () => {
                       // items={userPlaylist}
                       // />
                     >
-                        {userPlaylist.map((item) => (
-    <Menu.Item key={item.key} onClick={(e) => handleMenuClick(e, item)}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>{item.label}</span>
-        {item.playlistId !== 0 && (
-          <div>
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => handleEditPlaylistName(item.playlistId, item.label)}
-            />
-            <Button
-              icon={<DeleteOutlined />}
-              onClick={() => handleDeletePlaylist(item.playlistId, item.label)}
-            />
-          </div>
-        )}
-      </div>
-    </Menu.Item>
-  ))}
+                      {userPlaylist.map((item) => (
+                        <Menu.Item
+                          key={item.key}
+                          onClick={(e) => handleMenuClick(e, item)}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span>{item.label}</span>
+                            {item.playlistId !== 0 && (
+                              <div>
+                                <Button
+                                  style={{
+                                    border: "none",
+                                    background: "transparent",
+                                  }}
+                                  icon={<EditOutlined />}
+                                  onClick={() =>
+                                    handleEditPlaylistName(
+                                      item.playlistId,
+                                      item.label
+                                    )
+                                  }
+                                />
+                                <Button
+                                  style={{
+                                    border: "none",
+                                    background: "transparent",
+                                  }}
+                                  icon={<DeleteOutlined />}
+                                  onClick={() =>
+                                    handleDeletePlaylist(
+                                      item.playlistId,
+                                      item.label
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </Menu.Item>
+                      ))}
                       {/* {userPlaylist.map((item) => (
                         <Menu.Item
                           key={item.key}
@@ -325,52 +352,6 @@ const Playlist = () => {
                                 }
                               />
                             </>
-                          )}
-                        </Menu.Item>
-                      ))} */}
-                      {/* {userPlaylist.map((item) => (
-                        <Menu.Item
-                          key={item.key}
-                          onClick={(e) => handleMenuClick(e, item)}
-                        >
-                          {item.label}
-                          {item.playlistId !== 0 && (
-                            <Dropdown
-                              overlay={
-                                <Menu>
-                                  <Menu.Item
-                                    onClick={() =>
-                                      handleEditPlaylistName(
-                                        item.playlistId,
-                                        item.label
-                                      )
-                                    }
-                                  >
-                                    <EditOutlined />
-                                    Edit
-                                  </Menu.Item>
-                                  <Menu.Item
-                                    onClick={() =>
-                                      handleDeletePlaylist(
-                                        item.playlistId,
-                                        item.label
-                                      )
-                                    }
-                                  >
-                                    <DeleteOutlined />
-                                    Delete
-                                  </Menu.Item>
-                                </Menu>
-                              }
-                              trigger={["click"]}
-                            >
-                              <a
-                                className="ant-dropdown-link"
-                                onClick={(e) => e.preventDefault()}
-                              >
-                                <DownOutlined />
-                              </a>
-                            </Dropdown>
                           )}
                         </Menu.Item>
                       ))} */}
