@@ -37,7 +37,6 @@ export class AuthController {
   @Post('register')
   signUp(@Body() signUpDto: any, @Res({ passthrough: true }) response: any) {
     const token = this.authService.signUp(signUpDto.email, signUpDto.password, signUpDto.name);
-    // response.cookie("access_token", token)
     return token
   }
 
@@ -54,7 +53,14 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Put('editprofile')
   async editProfile(@Request() request, @Body() body) {
-    return await this.authService.updateProfile(body.userId, body.newUser);
+    try{
+      const user_id=this.authService.getUserIdFromToken(request)
+      console.log(body.userId, body.newUser)
+      return await this.authService.updateProfile(user_id, body.newUser);
+    }
+    catch(error){
+      throw new Error(`Error updating profile`+ error)
+    }
   }
 
 
@@ -63,6 +69,7 @@ export class AuthController {
   async getUser(@Request() request){
     return await this.authService.getUser(request);
   }
+ 
   // //////////////////////////////////////////////////////////////////
   // /////////////////////////////// Admin ////////////////////////////
   // //////////////////////////////////////////////////////////////////
@@ -94,5 +101,9 @@ export class AuthController {
       throw error;
     }
   }
-
+  @UseGuards(AdminGuard)
+  @Get('getuserInfo/:userId')
+  async getuserInfo(@Param('userId') userId){
+    return await this.authService.getuserInfo(userId);
+  }
 }

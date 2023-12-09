@@ -24,7 +24,6 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     const payload = { user_id: id, password: user.password };
-    // const playlists= this.playlistService.getUsersPlaylistsNames(id);
     return {
       access_token: await this.jwtService.signAsync(payload),
       id: id,
@@ -38,7 +37,7 @@ export class AuthService {
     if (findUser != null) {
       throw new UnauthorizedException('go to login');
     }
-    const { user, id } = await this.usersService.createUser({ email: email, password: password, name: name, playlists:[]});
+    const { user, id } = await this.usersService.createUser({ email: email, password: password, name: name});
     const payload = { user_id: id, password: user.password };
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -55,7 +54,7 @@ export class AuthService {
     else return user;
   }
 
-  async updateProfile(user_id: string, newUser: any) {
+  async updateProfile(user_id: any, newUser: any) {
     return await this.usersService.updateUserById(user_id, newUser);
   }
 
@@ -89,7 +88,6 @@ export class AuthService {
         password: user.password,
         email: user.email,
         userId: user._id,
-        playlist:user.playlists
       }
       usersList.push(newUser);
     })
@@ -104,8 +102,6 @@ export class AuthService {
     if (!(email == adminCredentials.email && password == adminCredentials.password))
       return false; else return true;
   }
-
-
 
   async adminSignIn(email: string, password: string) {
     // const user = await this.usersService.findByEmail(email);
@@ -127,5 +123,7 @@ export class AuthService {
       id: id
     };
   }
-
+  async getuserInfo(userId: any){
+    return await this.usersService.findUserById(userId);
+  }
 }

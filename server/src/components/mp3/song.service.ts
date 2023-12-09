@@ -6,6 +6,7 @@ import * as mongoose from 'mongoose';
 import { parseBuffer } from 'music-metadata';
 import * as mm from 'music-metadata/lib/core';
 import { AbuseReportsService } from '../abuseReports/abuseReports.service';
+import * as crypto from 'crypto';
 
 
 @Injectable()
@@ -25,8 +26,6 @@ export class SongService {
 
     const metadata = await mm.parseBuffer(audioFile.buffer, 'audio/mp3');
     const { song_name, rate, singer, description, permission, category } = song_details;
-    console.log(metadata.common.picture ? metadata.common.picture[0].data : null);
-    console.log(imageFile.buffer);
 
     const uploadedSong = {
       name: song_name,
@@ -39,7 +38,7 @@ export class SongService {
       uploadDate: new Date,
       like: 0,
       userIdUpload: userId,
-      artists: metadata.common.artists || singer == "" ? ['anonym'] : [singer],//מפה מטהדתה
+      artists: metadata.common.artists, //|| singer == "" ? ['anonym'] : [singer],//מפה מטהדתה
       album: metadata.common.album,
       duration: metadata.format.duration,
       title: metadata.common.title || song_name || 'לא ידוע',
@@ -51,11 +50,13 @@ export class SongService {
       description: metadata.common.description || description,
       category: category || ['other']
     }
+    console.log("metadata.common.artists ", metadata.common.artists)
     const newSong = new this.songModel(uploadedSong);
     //  בדיקה האם השיר קיים במאגר
     if (await this.checkIfSongExists(newSong))
       throw new ConflictException('Song exists');
     const savedSong = await newSong.save();
+    console.log(savedSong.artists)
     return savedSong;
     // }
     //  catch (error) {
@@ -66,13 +67,13 @@ export class SongService {
 
   // האם שיר קיים
   async checkIfSongExists(uploadedSong: any) {
-    const { duration, year, artists, album, name } = uploadedSong;
+    const { duration, year, artists, album, name, title, data } = uploadedSong;
 
     // Check for songs with the same duration
     const songsWithSameDuration = await this.songModel.find({ duration: duration });
 
     if (songsWithSameDuration.length === 0) {
-      console.log("no duration")
+      console.log("no same duration")
       return false;
     }
 
@@ -80,8 +81,7 @@ export class SongService {
     const songsWithSameYear = songsWithSameDuration.filter(song => song.year === year);
 
     if (songsWithSameYear.length === 0) {
-      console.log("no year")
-
+      console.log("no same year")
       return false;
     }
 
@@ -89,8 +89,7 @@ export class SongService {
     const songsWithSameArtists = songsWithSameYear.filter(song => song.artists[0] === artists[0]);
 
     if (songsWithSameArtists.length === 0) {
-      console.log("no artists")
-
+      console.log("no same artists")
       return false;
     }
 
@@ -98,15 +97,34 @@ export class SongService {
     const songsWithSameAlbum = songsWithSameArtists.filter(song => song.album === album);
 
     if (songsWithSameAlbum.length === 0) {
-      console.log("no albume")
-
+      console.log("no same albume")
       return false;
     }
 
     // Check for songs with the same name
-    const songsWithSameName = songsWithSameAlbum.filter(song => song.name === name);
 
-    return songsWithSameName.length > 0;
+    const songsWithSameName = songsWithSameAlbum.filter(song =>
+      song.title == title
+    );
+
+    if (songsWithSameName.length === 0) {
+      console.log("no same name")
+      return false;
+    }
+    // Check for songs with the same file data hash
+    const uploadedDataHash = crypto.createHash('md5').update(data).digest('hex');
+    const songsWithSameData = songsWithSameName.filter(song => {
+      const existingDataHash = crypto.createHash('md5').update(song.data).digest('hex');
+      return uploadedDataHash === existingDataHash;
+    });
+
+    if (songsWithSameData.length === 0) {
+      console.log("no same data")
+      return false;
+    }
+    return true;
+
+    // return songsWithSameData.length > 0;
   }
 
 
@@ -320,7 +338,9 @@ export class SongService {
     const result = await this.songModel.find({
       $or: [
         { name: { $regex: new RegExp(search, 'i') } },
-        { singerName: { $regex: new RegExp(search, 'i') } }
+        { singerName: { $regex: new RegExp(search, 'i') } },
+        { artists: { $elemMatch: { $regex: new RegExp(search, 'i') } } }
+
       ]
     })
       .limit(limit).skip(offset).exec();

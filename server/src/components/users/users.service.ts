@@ -31,15 +31,25 @@ export class UsersService {
     return await this.userModel.findById(id).exec();
   }
 
-  async updateUserById(userId: string, newUser: User): Promise<User> {
-    const updatedUser = await this.userModel.findOneAndUpdate({ _id: userId }, newUser).exec();
+  async updateUserById(userId: any, newUser: any): Promise<User> {
+    try {
+      const updatedUser = await this.userModel
+        .findOneAndUpdate(
+          { _id: userId },
+          { name: newUser.username , email: newUser.email, password: newUser.password},
+          { new: true }
+        )
+        .exec();
 
-    if (!updatedUser) {
-      // Handle the case when the user with the given ID is not found
-      // For example, you can throw an exception or return null/undefined
-      throw new Error('User not found');
+      if (!updatedUser) {
+        console.log('User not found or update failed.');
+      } else {
+        console.log('User updated successfully:', updatedUser);
+        return updatedUser;
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
     }
-    return updatedUser;
   }
 
   // רשימת כל המשתמשים
@@ -59,15 +69,4 @@ export class UsersService {
     return u;
   }
 
-  // רשימה של ID של רשימות השמעה למשתמש זה 
-  async getUsersPlaylists(user_id: string) {
-    try {
-      const userId = new mongoose.Types.ObjectId(user_id);
-      const findU = await this.userModel.findOne({ _id: userId });
-      return findU.playlists;
-    }
-    catch (error) {
-      throw new NotFoundException(`User ${user_id} does not exist`);
-    }
-  }
 }

@@ -66,7 +66,5 @@ export class Song extends Document {
 
   @Prop({ default: ["other"] })
   category: string[];
-
 }
-
 export const SongSchema = SchemaFactory.createForClass(Song);

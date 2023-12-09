@@ -61,7 +61,6 @@ export class SongController {
   async search(@Query('filter') filter?: any, @Query('sort') sort?: any, @Query('search') search?: string, @Query('limit') limit?: number,
     @Query('offset') offset?: number, @Res() res?): Promise<Song[]> {
     try {
-      console.log(`filter: ${filter}, sort: ${sort}`);
       let songs: Song[] = [];
       let serviceResponse: any = {};
       serviceResponse = await this.songService.getSongs(search, limit, offset, filter, sort);
@@ -92,6 +91,8 @@ export class SongController {
           description: song.description,
           category: song.category || ['other']
         };
+
+        console.log(song.artists);
         songObjs.push(songObj);
       });
       console.log(serviceResponse.songListLength || null);
@@ -224,7 +225,6 @@ export class SongController {
         tag.push("bad");
         if (songInfo.like > 1)
           tag.push("Love");
-
         const songInfoObj = {
           key: ++index,
           songId: songInfo._id,

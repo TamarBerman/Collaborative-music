@@ -12,10 +12,10 @@ export class Playlist extends Document {
     @Prop()
     userId: string;
 
-    @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Song' }] }) // 'Song' should match the model name or its ref property
-    // list: [MongooseSchema.Types.ObjectId] ;
-    list: [Types.ObjectId] ;
-    
+    @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Song' }] }) 
+    list: [Types.ObjectId] ; 
 }
-
 export const PlaylistSchema = SchemaFactory.createForClass(Playlist);
+
+
+    // list: [MongooseSchema.Types.ObjectId] ;
