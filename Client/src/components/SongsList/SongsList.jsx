@@ -21,7 +21,7 @@ const SongsList = (props) => {
   const [filteredData, setFilteredData] = useState([]);
   const [sort, setSort] = useState("");
   const [currentPage, setCurrentPage] = useState(1); // Track the current page
-  const [cookies] = useCookies(["access_token"]);
+  const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const accessToken = cookies.access_token || null;
   const callComponent = isPlaylistActive ? "playlist" : "music";
 
@@ -121,10 +121,8 @@ const SongsList = (props) => {
         );
       }
       const newData = response.data.songs;
-      console.log("RRRRRRR", response.data);
       setData(newData);
       if (response.data.songListLength) {
-        console.log("llllll", response.data.songListLength);
         setLength(response.data.songListLength);
       }
       console.log(length);
@@ -146,10 +144,10 @@ const SongsList = (props) => {
 
   return (
     <>
+      {!isPlaylistActive && !searchValue ? (
+        <>
           <Divider style={customDividerStyle}>{callComponent}</Divider>
 
-      {!isPlaylistActive && (
-        <>
           <Row align="middle">
             <Col span={12} align="left">
               <Filter setFilteredData={setFilteredData} />
@@ -159,6 +157,8 @@ const SongsList = (props) => {
             </Col>
           </Row>
         </>
+      ) : (
+        <div style={{ marginTop: 20 }}></div>
       )}
       <Spin spinning={loading} tip="Loading" size="large">
         <List

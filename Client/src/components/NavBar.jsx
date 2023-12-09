@@ -21,17 +21,21 @@ import { userContext } from "../contexts/userContext";
 import axios from "axios";
 const baseURL = "http://localhost:3000";
 import { playlistsContext } from "../contexts/playlistsContext";
+          // Assuming your image is in the public folder under 'assets/logo.png'
+// Adjust the path accordingly if it's in a different location
+const LogoImage = () => (
+  <img src="src/assets/iHeart.png" style={{ height: '40px' }} />
+);
 
+// Your Menu.Item with the Link containing the image
 const NavBar = ({ children }) => {
-  const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
+  const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const [current, setCurrent] = useState("mail");
-  const isLoggedIn = !!cookies.access_token; // Check if access_token exists
-  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState("Guest");
-
   const [userPlaylist, setUserPlaylist] = useState([]);
   const [newPlaylistName, setNewPlaylistName] = useState("");
-
+  const isLoggedIn = !!cookies.access_token; // Check if access_token exists
+  const navigate = useNavigate();
   useEffect(() => {
     console.log("i am in navbar!!!!!!!!!!");
     //
@@ -85,7 +89,7 @@ const NavBar = ({ children }) => {
         label,
       };
     };
-  }, [userPlaylist, setUserPlaylist, cookies.access_token, removeCookie]);
+  }, [userPlaylist, setUserPlaylist]);
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -93,11 +97,11 @@ const NavBar = ({ children }) => {
   const handleUserMenuClick = (e) => {};
 
   const handleLogoutClick = () => {
-    console.log("renove");
+    console.log("remove");
     removeCookie("access_token", { path: "/" });
     removeCookie("id", { path: "/" });
+    setCurrentUser("Guest")
     message.success("You are now logged out ");
-    // render the page!!!! TODO:
   };
   const handleConnectClick = () => {
     navigate("/login");
@@ -140,6 +144,7 @@ const NavBar = ({ children }) => {
         </Menu.Item>
       )}
     </Menu>
+    
   );
   return (
     <>
@@ -155,12 +160,18 @@ const NavBar = ({ children }) => {
             alignItems: "center",
           }}
         >
-          <Menu.Item
+          {/* <Menu.Item
             key="logo"
             style={{ marginRight: "auto", fontSize: "25px" }}
           >
-            <Link to={"/"}>Home</Link>
-          </Menu.Item>
+            <Link to={"/"}> </Link>
+          </Menu.Item> */}
+
+<Menu.Item key="logo" style={{ marginRight: 'auto', fontSize: '25px' }}>
+  <Link to="/">
+    <LogoImage />
+  </Link>
+</Menu.Item>
 
           <Menu.Item
             key="music"
@@ -289,9 +300,16 @@ const NavBar = ({ children }) => {
       </Affix>
       {/* contexts */}
 
-      <userContext.Provider value={{ currentUser, setCurrentUser }}>
-        <playlistsContext.Provider value={{userPlaylist, setUserPlaylist,newPlaylistName, setNewPlaylistName }}>
-        {children}
+      <userContext.Provider value={{ currentUser, setCurrentUser, isLoggedIn}}>
+        <playlistsContext.Provider
+          value={{
+            userPlaylist,
+            setUserPlaylist,
+            newPlaylistName,
+            setNewPlaylistName,
+          }}
+        >
+          {children}
         </playlistsContext.Provider>
       </userContext.Provider>
     </>

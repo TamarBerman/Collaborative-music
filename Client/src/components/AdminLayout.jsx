@@ -8,17 +8,16 @@ import { useNavigate } from "react-router-dom";
 import HelloAdmin from "./Manager/HelloAdmin";
 import AdminLogin from "./Manager/AdminPage";
 import AdminLoginModal from "./Manager/AdminLoginModal";
+const LogoImage = () => (
+  <img src="src/assets/iHeart.png" style={{ height: "40px" }} />
+);
 
 const AdminLayout = ({ children }) => {
   const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
   const [current, setCurrent] = useState("mail");
   const isLoggedIn = !!cookies.access_token; // Check if access_token exists
   const navigate = useNavigate();
-const [isAdminLoggedIn, setIsAdminLoggedIn] =useState(false);
-
-  useEffect(() => {
-    console.log("admin layout changed");
-  }, []);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -76,7 +75,12 @@ const [isAdminLoggedIn, setIsAdminLoggedIn] =useState(false);
   );
   return (
     <>
-      {!isAdminLoggedIn ? <AdminLoginModal isAdminLoggedIn={isAdminLoggedIn}setIsAdminLoggedIn={setIsAdminLoggedIn}/> : null}
+      {!isAdminLoggedIn ? (
+        <AdminLoginModal
+          isAdminLoggedIn={isAdminLoggedIn}
+          setIsAdminLoggedIn={setIsAdminLoggedIn}
+        />
+      ) : null}
       <HelloAdmin />
 
       <Affix>
@@ -95,7 +99,10 @@ const [isAdminLoggedIn, setIsAdminLoggedIn] =useState(false);
             key="logo"
             style={{ marginRight: "auto", fontSize: "20px" }}
           >
-            <Link to={"/"}>Back to site</Link>
+            <Link to={"/"}>
+              {" "}
+              <LogoImage />
+            </Link>
           </Menu.Item>
 
           <Menu.Item
@@ -124,10 +131,9 @@ const [isAdminLoggedIn, setIsAdminLoggedIn] =useState(false);
           </Menu.Item>
 
           <Menu.Item key="register">
-          {/* style={{ fontSize: "17px" }} */}
+            {/* style={{ fontSize: "17px" }} */}
             {/* <Link to={"/register"}>Register</Link> */}
           </Menu.Item>
-
         </Menu>
       </Affix>
       <br />

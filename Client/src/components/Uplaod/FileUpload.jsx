@@ -15,12 +15,14 @@ import {
 } from "antd";
 
 import ImgCrop from "antd-img-crop";
-import { React, useState } from "react";
+import { React, useState, useContext } from "react";
 import { useForm } from "antd/lib/form/Form";
 import { message, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 const { TextArea } = Input;
+import { userContext } from "../../contexts/userContext";
+import NavigateToLogin from "../Login/NavigateToLogin";
 
 // our url for http request
 const baseURL = "http://localhost:3000/mp3";
@@ -33,23 +35,16 @@ const FileUpload = () => {
   const [description, setDescription] = useState("");
   const [permission, setPermission] = useState(false);
   const [singername, setSingername] = useState("");
-  const [category, setCategory] = useState(["other" ]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [category, setCategory] = useState(["other"]);
+  const [errorMessage] = useState("");
   const [form] = useForm();
   const [loading, setLoading] = useState(false);
 
   const [metadata, setMetadata] = useState({});
 
-  const [fileList, setFileList] = useState([
-    // {
-    //   uid: "-1",
-    //   name: "defualt.png",
-    //   status: "done",
-    //   url: musicplay,
-    // },
-  ]);
+  const [fileList, setFileList] = useState([]);
   const navigate = useNavigate();
-
+  const { isLoggedIn } = useContext(userContext);
   // design
   const formItemLayout = {
     labelCol: {
@@ -133,15 +128,13 @@ const FileUpload = () => {
     formData.append("song_details[description]", description);
     formData.append("song_details[singer]", singername);
 
-    let i=0;
-    category.forEach(category=>{
+    let i = 0;
+    category.forEach((category) => {
       formData.append(`song_details[category][${i++}]`, category);
-    })
-
+    });
 
     const values = form.getFieldsValue();
     const accessToken = cookies.access_token || "aaa";
-    console.log("Access Token:", accessToken);
     axios
       .post(`${baseURL}/upload`, formData, {
         headers: {
@@ -266,202 +259,206 @@ const FileUpload = () => {
     { label: "אחר", value: "other" },
   ];
   const handleChangeCategory = (value) => {
-    console.log(value)
-    setCategory(value)
+    console.log(value);
+    setCategory(value);
     console.log(`selected ${value}`);
   };
 
   return (
     <>
+      {!isLoggedIn && <NavigateToLogin />}
       <br></br>
-      <div
-        style={{
-          width: "80%",
-          margin: "auto",
-        }}
-      >
-        <Divider style={customDividerStyle}>Upload</Divider>
-      </div>
-
-      <div>
-        {errorMessage && (
-          <Alert message="Error" type="error" showIcon closable />
-        )}
-      </div>
-      {/* <Spin spinning={loading} tip="Loading" size="large"> */}
-      <Spin
-        indicator={loadingIcon}
-        spinning={loading}
-        tip="Uploading song | Please wait."
-        size="large"
-      >
-        <Form
-          name="upload_form"
-          form={form}
-          {...formItemLayout}
-          // onFinish={({ dragger }) =>
-          //   handleFileUpload(dragger[0].originFileObj, fileList[0].originFileObj)
-          // }
-          onFinish={handleSubmit}
-          initialValues={{
-            rate: rate,
-            songname: songname,
-          }}
-          style={{
-            maxWidth: 1000,
-            margin: "auto",
-          }}
-        >
-          <Form.Item label="Dragger">
-            <Form.Item
-              name="dragger"
-              valuePropName="fileList"
-              getValueFromEvent={normFile}
-              noStyle
-            >
-              <Upload.Dragger
-                {...props}
-                accept=".mp3"
-                beforeUpload={handleBeforeUpload}
-                name="files"
-              >
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">
-                  Click or drag file to this area to upload
-                </p>
-                <p className="ant-upload-hint">
-                  Support for a single or bulk upload.
-                </p>
-              </Upload.Dragger>
-            </Form.Item>
-          </Form.Item>
-
-          <Form.Item
-            label="Song name"
-            name="songname"
-            rules={[
-              {
-                // required: true,
-                message: "Please input name of song!",
-              },
-            ]}
-          >
-            <Input
-              value={songname}
-              onChange={(e) => setSongname(e.target.value)}
-            />
-            <br />
-          </Form.Item>
-
-          <Form.Item
-            label="Singer name"
-            name="singername"
-            rules={[
-              {
-                // required: true,
-                message: "Please input name of singer!",
-              },
-            ]}
-          >
-            <Input
-              value={singername}
-              onChange={(e) => setSingername(e.target.value)}
-            />
-            <br />
-          </Form.Item>
-
-          <Form.Item
-            label="Description"
-            name="description"
-            rules={[
-              {
-                message: "Please input description!",
-              },
-            ]}
-          >
-            <TextArea
-              defaultValue={description}
-              showCount
-              maxLength={400}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </Form.Item>
-
-          <Form.Item name="catogory" label="Select catrgory">
-            <Select
-              mode="multiple"
-              allowClear
-              style={{
-                width: "100%",
-              }}
-              placeholder="Please select"
-              defaultValue={category}
-              onChange={handleChangeCategory}
-              options={options}
-              value={category}
-            />
-          </Form.Item>
-          <Form.Item name="permission" label="choose permission">
-            <Radio.Group>
-              <Radio
-                value="false"
-                onChange={(e) => setPermission(e.target.value)}
-              >
-                private
-              </Radio>
-              <Radio
-                value="true"
-                onChange={(e) => setPermission(e.target.value)}
-              >
-                public
-              </Radio>
-            </Radio.Group>
-          </Form.Item>
-
-          <Form.Item name="rate" label="Rate">
-            <Rate value={rate} onChange={(value) => setRate(value)} />
-          </Form.Item>
-
-          <ImgCrop rotationSlider>
-            <Upload
-              name="image"
-              listType="picture-card"
-              fileList={fileList}
-              onChange={onChange}
-              onPreview={onPreview}
-              customRequest={customRequest}
-            >
-              {fileList.length < 5 && "+ Upload"}
-            </Upload>
-          </ImgCrop>
-          <span style={{ fontSize: 13, color: "red" }}>
-            העלאת תמונה הינה חובה.
-          </span>
-          <span>{"  "}</span>
-          <span style={{ fontSize: 13, color: "red" }}>
-            תמונה זו תוצג במקרה שלא קיימת תמונת ברירת מחדל לשיר
-          </span>
-
-          <Form.Item
-            wrapperCol={{
-              span: 12,
-              offset: 6,
+    
+        <>
+          {" "}
+          <div
+            style={{
+              width: "80%",
+              margin: "auto",
             }}
           >
-            <Space style={{ marginBottom: 20 }}>
-              <Button type="primary" htmlType="submit">
-                Submit
-              </Button>
-              <Button htmlType="reset" onClick={resetFormFunction}>
-                reset
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Spin>
-      {/* </Spin> */}
+            <Divider style={customDividerStyle}>Upload</Divider>
+          </div>
+          <div>
+            {errorMessage && (
+              <Alert message="Error" type="error" showIcon closable />
+            )}
+          </div>
+          {/* <Spin spinning={loading} tip="Loading" size="large"> */}
+          <Spin
+            indicator={loadingIcon}
+            spinning={loading}
+            tip="Uploading song | Please wait."
+            size="large"
+          >
+            <Form
+              name="upload_form"
+              form={form}
+              {...formItemLayout}
+              // onFinish={({ dragger }) =>
+              //   handleFileUpload(dragger[0].originFileObj, fileList[0].originFileObj)
+              // }
+              onFinish={handleSubmit}
+              initialValues={{
+                rate: rate,
+                songname: songname,
+              }}
+              style={{
+                maxWidth: 1000,
+                margin: "auto",
+              }}
+            >
+              <Form.Item label="Dragger">
+                <Form.Item
+                  name="dragger"
+                  valuePropName="fileList"
+                  getValueFromEvent={normFile}
+                  noStyle
+                >
+                  <Upload.Dragger
+                    {...props}
+                    accept=".mp3"
+                    beforeUpload={handleBeforeUpload}
+                    name="files"
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">
+                      Click or drag file to this area to upload
+                    </p>
+                    <p className="ant-upload-hint">
+                      Support for a single or bulk upload.
+                    </p>
+                  </Upload.Dragger>
+                </Form.Item>
+              </Form.Item>
+
+              <Form.Item
+                label="Song name"
+                name="songname"
+                rules={[
+                  {
+                    // required: true,
+                    message: "Please input name of song!",
+                  },
+                ]}
+              >
+                <Input
+                  value={songname}
+                  onChange={(e) => setSongname(e.target.value)}
+                />
+                <br />
+              </Form.Item>
+
+              <Form.Item
+                label="Singer name"
+                name="singername"
+                rules={[
+                  {
+                    // required: true,
+                    message: "Please input name of singer!",
+                  },
+                ]}
+              >
+                <Input
+                  value={singername}
+                  onChange={(e) => setSingername(e.target.value)}
+                />
+                <br />
+              </Form.Item>
+
+              <Form.Item
+                label="Description"
+                name="description"
+                rules={[
+                  {
+                    message: "Please input description!",
+                  },
+                ]}
+              >
+                <TextArea
+                  defaultValue={description}
+                  showCount
+                  maxLength={400}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item name="catogory" label="Select catrgory">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  style={{
+                    width: "100%",
+                  }}
+                  placeholder="Please select"
+                  defaultValue={category}
+                  onChange={handleChangeCategory}
+                  options={options}
+                  value={category}
+                />
+              </Form.Item>
+              {/* <Form.Item name="permission" label="choose permission">
+                <Radio.Group>
+                  <Radio
+                    value="false"
+                    onChange={(e) => setPermission(e.target.value)}
+                  >
+                    private
+                  </Radio>
+                  <Radio
+                    value="true"
+                    onChange={(e) => setPermission(e.target.value)}
+                  >
+                    public
+                  </Radio>
+                </Radio.Group>
+              </Form.Item> */}
+
+              <Form.Item name="rate" label="Rate">
+                <Rate value={rate} onChange={(value) => setRate(value)} />
+              </Form.Item>
+
+              <ImgCrop rotationSlider>
+                <Upload
+                  name="image"
+                  listType="picture-card"
+                  fileList={fileList}
+                  onChange={onChange}
+                  onPreview={onPreview}
+                  customRequest={customRequest}
+                >
+                  {fileList.length < 5 && "+ Upload"}
+                </Upload>
+              </ImgCrop>
+              <span style={{ fontSize: 13, color: "red" }}>
+                העלאת תמונה הינה חובה.
+              </span>
+              <span>{"  "}</span>
+              <span style={{ fontSize: 13, color: "red" }}>
+                תמונה זו תוצג במקרה שלא קיימת תמונת ברירת מחדל לשיר
+              </span>
+
+              <Form.Item
+                wrapperCol={{
+                  span: 12,
+                  offset: 6,
+                }}
+              >
+                <Space style={{ marginBottom: 20 }}>
+                  <Button type="primary" htmlType="submit">
+                    Submit
+                  </Button>
+                  <Button htmlType="reset" onClick={resetFormFunction}>
+                    reset
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Spin>
+        </>
+      {" "}
     </>
   );
 };

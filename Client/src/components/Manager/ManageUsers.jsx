@@ -264,7 +264,7 @@ const ManageUsers = () => {
   //  פרטים נוספים
   const moreInfo = (userId) => {
     axios
-      .get(`${baseUsersUrl}/getUser/${userId}`, {
+      .get(`${baseUsersUrl}/getuserInfo/${userId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then((response) => {
@@ -331,7 +331,6 @@ const ManageUsers = () => {
   ];
   return (
     <>
-      {/* <Spin spinning={loading} tip="Loading" size="large"> */}
       {loading ? (
         <Skeleton
           active
@@ -340,33 +339,10 @@ const ManageUsers = () => {
         />
       ) : (
         <Table
-          rowSelection={rowSelection}
           columns={columns}
           dataSource={data}
         />
       )}
-      {/* </Spin> */}
-      <div
-        style={{
-          marginBottom: 16,
-        }}
-      >
-        <Button
-          type="primary"
-          onClick={deleteSelectedUsers}
-          disabled={!hasSelected}
-          loading={deleteLoading}
-        >
-          Delete
-        </Button>
-        <span
-          style={{
-            marginLeft: 8,
-          }}
-        >
-          {hasSelected ? `Selected ${selectedRowKeys.length} items` : ""}
-        </span>
-      </div>
     </>
   );
 };

@@ -8,7 +8,7 @@ import {
   Divider,
 } from "antd";
 import { UserOutlined } from "@ant-design/icons";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
@@ -19,11 +19,10 @@ import React, { useContext } from "react";
 import { userContext } from "../../contexts/userContext";
 
 export default function Login() {
-  const [cookies, setCookie] = useCookies(["access_token", "id"]);
+  const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const [form] = Form.useForm();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
-  const { state } = useLocation();
   const baseURL = "http://localhost:3000";
 
   // שימוש בקונטקסט
@@ -45,23 +44,17 @@ export default function Login() {
     axios
       .post(`${baseURL}/auth/login`, { email, password })
       .then((response) => {
-        //200
-        console.log(response.data);
-        console.log(response.data?.user?.name);
         if (cookies.access_token) {
-          console.log("tr");
           // Update the existing cookie value
           setCookie("access_token", response.data.access_token, { path: "/" });
           setCookie("id", response.data.id, { path: "/" });
         } else {
-          console.log("fl");
           setCookie("access_token", response.data.access_token, { path: "/" });
           setCookie("id", response.data.id, { path: "/" });
         }
         message.success(response.data.user.name + " Logged in successfully");
         // עדכון קונטקסט
         setCurrentUser(response.data.user.name);
-        // if (state == null) navigate("/home");
         navigate(-1);
       })
       .catch(function (error) {
@@ -91,7 +84,6 @@ export default function Login() {
     marginBottom: "60px",
     marginTop: "40px",
   };
-  const { Title } = Typography;
   return (
     <div
       style={{
@@ -99,8 +91,6 @@ export default function Login() {
         margin: "auto",
       }}
     >
-      {/* <Title>Login</Title> */}
-      <br />
       <Divider style={customDividerStyle}>Login</Divider>
       <Form
         style={{
@@ -125,12 +115,13 @@ export default function Login() {
         <Form.Item
           label="Username"
           name="username"
-          rules={[
-            {
-              required: true,
-              message: "Please input your username!",
-            },
-          ]}
+          style={{ visibility: "hidden" }}
+          // rules={[
+          //   {
+          //     required: true,
+          //     message: "Please input your username!",
+          //   },
+          // ]}
         >
           <Input />
         </Form.Item>
@@ -172,9 +163,6 @@ export default function Login() {
           }}
         >
           <Checkbox>Remember me </Checkbox>
-          <a className="login-form-forgot" href="">
-            Forgot password
-          </a>
         </Form.Item>
 
         <Form.Item
@@ -183,6 +171,7 @@ export default function Login() {
             span: 16,
           }}
         >
+          
           <Button
             type="primary"
             htmlType="submit"

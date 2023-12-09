@@ -327,6 +327,7 @@ const ManageSongs = () => {
             } else if (tag === "bad") {
               color = "red";
             }
+            console.log(tag);
             return (
               <Tag color={color} key={tag}>
                 {tag.toUpperCase()}

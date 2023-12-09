@@ -44,13 +44,13 @@ const Home = () => {
           enterButton="Search"
           size="large"
           value={searchValue}
-          suffix={suffix}
+          // suffix={suffix}
           onSearch={onSearch}
           onChange={(event) => {
             setSearchValue(event.target.value);
             setStartSearch(false);
           }}
-          style={{lineHeight:2.15, padding:"2px"}}
+          style={{lineHeight:2.15, padding:"2px",  height: "40px" }}
         />
 
         {startSearch && <SongsList search={searchValue} />}

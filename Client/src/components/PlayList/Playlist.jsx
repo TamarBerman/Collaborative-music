@@ -3,47 +3,30 @@ import { useCookies } from "react-cookie";
 import SongsList from "../SongsList/SongsList";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import {
-  Spin,
-  Typography,
-  Button,
-  Menu,
-  Col,
-  Row,
-  Modal,
-  Dropdown,
-} from "antd";
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  DownOutlined,
-  DeleteOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
+import { Spin, Typography, Button, Menu, Modal, Divider } from "antd";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { message } from "antd/lib";
 import { playlistsContext } from "../../contexts/playlistsContext";
+import NavigateToLogin from "../Login/NavigateToLogin";
+import { userContext } from "../../contexts/userContext";
 const { Title } = Typography;
-const { Paragraph } = Typography;
 
 const Playlist = () => {
   // שימוש בקונטקסט
   const { userPlaylist, setUserPlaylist, newPlaylistName, setNewPlaylistName } =
     useContext(playlistsContext);
+    const { isLoggedIn } =
+    useContext(userContext);
   const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const loggedIn = !!cookies.access_token;
   const [playlistId, setPlaylistId] = useState("");
   const [loading, setLoading] = useState(true); // Add a loading state
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [playlistLength, setPlaylistLength] = useState(0);
-  // const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [myPlaylistName, setMyPlaylistName] = useState(newPlaylistName);
   // const [userPlaylist, setUserPlaylist] = useState([]);
   const baseURL = "http://localhost:3000/mp3";
-  const authURL = "http://localhost:3000/auth";
-  const navigate = useNavigate();
 
-  const navigateToLogin = () => {
-    navigate("/login");
-  };
   useEffect(() => {
     // כל רשימות השמעה של למשתמש זה
     // axios
@@ -80,9 +63,11 @@ const Playlist = () => {
   const [open, setOpen] = useState(false);
   const showModal = () => {
     setOpen(true);
+    setMyPlaylistName(newPlaylistName);
   };
   const hideModal = () => {
     setNewPlaylistName(`playList_${userPlaylist.length}`);
+    setMyPlaylistName(`playList_${userPlaylist.length}`);
     setOpen(false);
   };
 
@@ -96,11 +81,7 @@ const Playlist = () => {
       label,
     };
   };
-  // תפריט פתוח או סגור
-  const [collapsed, setCollapsed] = useState(false);
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
+
   // לחיצה על איבר בתפריט
   const handleMenuClick = (e) => {
     const clickedPlaylist = userPlaylist.find((item) => {
@@ -203,7 +184,7 @@ const Playlist = () => {
     axios
       .post(
         `${baseURL}/createPlaylist`,
-        { newPlaylistName: newPlaylistName },
+        { newPlaylistName: myPlaylistName },
         {
           headers: {
             Authorization: `Bearer ${cookies.access_token}`,
@@ -214,7 +195,6 @@ const Playlist = () => {
         // כאן נקבל חזרה אוביקט של
         // ונציב ב userPlaylist
         let updatedUserPlaylist = userPlaylist.slice(0, -1);
-        console.log(response);
         // Add the response data to the copied userPlaylist
         updatedUserPlaylist.push({
           key: userPlaylist.length + 1, // Adjust the key accordingly
@@ -225,7 +205,9 @@ const Playlist = () => {
         updatedUserPlaylist.push(userPlaylist[userPlaylist.length - 1]);
         // Update userPlaylist with the modified array
         setUserPlaylist(updatedUserPlaylist);
-        hideModal();
+        setNewPlaylistName(`playList_${updatedUserPlaylist.length}`);
+        setMyPlaylistName(`playList_${updatedUserPlaylist.length}`);
+        setOpen(false);
       })
       .catch((error) => {
         if (error.response.status == 400)
@@ -243,132 +225,106 @@ const Playlist = () => {
     height: "100vh",
   };
 
-  // edit
+  const customDividerStyle = {
+    height: "10px", // Adjust the height to make it bigger
+    backgroundColor: "#000", // Change the color to your preference
+    border: "none", // Remove the default border
+    fontSize: "24px", // Adjust the font size to make it bigger
+    marginBottom: "20px",
+    marginTop: "40px",
+  };
 
   return (
     <>
       <Spin spinning={loading} tip="Loading" size="large">
+        <Divider style={customDividerStyle}>Playlist</Divider>
         <>
           {loggedIn && !loading && (
-            <>
-              <Row>
-                <Col flex="256px">
-                  <div
-                    style={{
-                      width: "256px",
-                    }}
-                  >
-                    <Button
-                      type="primary"
-                      onClick={toggleCollapsed}
-                      style={{
-                        marginBottom: 16,
-                      }}
+            <div style={{ display: "flex", width: "100%" }}>
+              <div
+                style={{
+                  width: "18%",
+                  height: "74vh",
+                  minHeight: "74vh",
+                  maxHeight: "74vh",
+                  overflowY: "auto",
+                  position: "sticky",
+                  top: 100,
+                  background: "#001529",
+                  marginRight: 20,
+                }}
+              >
+                <Menu mode="inline" theme="dark" onClick={handleMenuClick}>
+                  {userPlaylist.map((item) => (
+                    <Menu.Item
+                      key={item.key}
+                      onClick={(e) => handleMenuClick(e, item)}
                     >
-                      {collapsed ? (
-                        <MenuUnfoldOutlined />
-                      ) : (
-                        <MenuFoldOutlined />
-                      )}
-                    </Button>
-                    <Menu
-                      mode="inline"
-                      theme="dark"
-                      inlineCollapsed={collapsed}
-                      onClick={handleMenuClick}
-                      // items={userPlaylist}
-                      // />
-                    >
-                      {userPlaylist.map((item) => (
-                        <Menu.Item
-                          key={item.key}
-                          onClick={(e) => handleMenuClick(e, item)}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <span>{item.label}</span>
-                            {item.playlistId !== 0 && (
-                              <div>
-                                <Button
-                                  style={{
-                                    border: "none",
-                                    background: "transparent",
-                                  }}
-                                  icon={<EditOutlined />}
-                                  onClick={() =>
-                                    handleEditPlaylistName(
-                                      item.playlistId,
-                                      item.label
-                                    )
-                                  }
-                                />
-                                <Button
-                                  style={{
-                                    border: "none",
-                                    background: "transparent",
-                                  }}
-                                  icon={<DeleteOutlined />}
-                                  onClick={() =>
-                                    handleDeletePlaylist(
-                                      item.playlistId,
-                                      item.label
-                                    )
-                                  }
-                                />
-                              </div>
-                            )}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        {item.playlistId == 0 ? (
+                          <>
+                            <span style={{ fontWeight: "800px" }}>
+                              {item.label}
+                            </span>
+                            <PlusOutlined />
+                          </>
+                        ) : (
+                          <span>{item.label}</span>
+                        )}
+
+                        {item.playlistId !== 0 && (
+                          <div>
+                            <Button
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                              }}
+                              icon={<EditOutlined />}
+                              onClick={() =>
+                                handleEditPlaylistName(
+                                  item.playlistId,
+                                  item.label
+                                )
+                              }
+                            />
+                            <Button
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                              }}
+                              icon={<DeleteOutlined />}
+                              onClick={() =>
+                                handleDeletePlaylist(
+                                  item.playlistId,
+                                  item.label
+                                )
+                              }
+                            />
                           </div>
-                        </Menu.Item>
-                      ))}
-                      {/* {userPlaylist.map((item) => (
-                        <Menu.Item
-                          key={item.key}
-                          onClick={(e) => handleMenuClick(e, item)}
-                        >
-                          {item.label}
-                          {item.playlistId !== 0 && (
-                            <>
-                              <Button
-                                icon={<EditOutlined />}
-                                onClick={() =>
-                                  handleEditPlaylistName(
-                                    item.playlistId,
-                                    item.label
-                                  )
-                                }
-                              />
-                              <Button
-                                icon={<DeleteOutlined />}
-                                onClick={() =>
-                                  handleDeletePlaylist(
-                                    item.playlistId,
-                                    item.label
-                                  )
-                                }
-                              />
-                            </>
-                          )}
-                        </Menu.Item>
-                      ))} */}
-                    </Menu>
-                  </div>
-                </Col>
-                <Col flex="auto">
-                  {showPlaylist && (
-                    <SongsList
-                      // playlistLength={playlistLength}
-                      playlistId={playlistId}
-                      isPlaylistActive={true}
-                    />
-                  )}
-                </Col>
-              </Row>
-            </>
+                        )}
+                      </div>
+                    </Menu.Item>
+                  ))}
+                  {/* Your menu items go here */}
+                </Menu>
+              </div>
+              <div style={{ width: "82%" }}>
+                {/* Song List */}
+                {showPlaylist && (
+                  <SongsList
+                    // playlistLength={playlistLength}
+                    playlistId={playlistId}
+                    isPlaylistActive={true}
+                  />
+                )}
+              </div>
+            </div>
           )}
           {!loggedIn && (
             <>
@@ -383,6 +339,7 @@ const Playlist = () => {
                   features
                 </Title>
               </div>
+              {/* <NavigateToLogin/> */}
             </>
           )}
         </>
@@ -397,8 +354,8 @@ const Playlist = () => {
         cancelText="Cancle"
       >
         <input
-          value={newPlaylistName}
-          onChange={(e) => setNewPlaylistName(e.target.value)}
+          value={myPlaylistName}
+          onChange={(e) => setMyPlaylistName(e.target.value)}
         ></input>
       </Modal>
     </>

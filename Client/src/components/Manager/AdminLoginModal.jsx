@@ -32,7 +32,7 @@ const AdminLoginModal = ({ isAdminLoggedIn, setIsAdminLoggedIn }) => {
   }, []);
   const [isModalOpen, setIsModalOpen] = useState([false, false]);
   const { styles } = useStyle();
-  const [cookies, setCookie] = useCookies(["access_token", "id"]);
+  const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const [form] = Form.useForm();
   const navigate = useNavigate();
 

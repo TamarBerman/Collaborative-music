@@ -67,7 +67,7 @@ const Player = () => {
   const { Header, Footer, Sider, Content } = Layout;
   const [likedSongs, setLikedSongs] = useState([]);
   const [isLiked, setIsLiked] = useState(false);
-  const [cookies, setCookie, removeCookie] = useCookies(["access_token"]);
+  const [cookies, setCookie, removeCookie] = useCookies(["access_token", "id"]);
   const [addedToPlaylist, setAddedToPlaylist] = useState(false);
   const [existsPlaylist, setExistsPlaylist] = useState(null);
   const [showPlaylists, setShowPlaylists] = useState(false);
